@@ -3,6 +3,12 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { parseLogs, groupErrors } from "./log-parser";
 import { analyzeWithLLM } from "./llm-service";
+import { 
+  reviewApiContract, 
+  getResilienceAdvice, 
+  scanCode, 
+  reviewSystemDesign 
+} from "./tool-services";
 import { analyzeLogsRequestSchema, type AnalyzeLogsResponse } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { fromZodError } from "zod-validation-error";
@@ -126,6 +132,74 @@ export async function registerRoutes(
     asyncHandler(async (req, res) => {
       const history = await storage.getAnalysisHistory();
       res.json(history);
+    })
+  );
+
+  // Tool: API Contract Reviewer
+  app.post(
+    "/api/tools/api-review",
+    asyncHandler(async (req, res) => {
+      console.log("[API] API Review request received");
+      const { apiContract } = req.body;
+      
+      if (!apiContract || typeof apiContract !== "string") {
+        res.status(400).json({ error: "apiContract is required" });
+        return;
+      }
+
+      const result = await reviewApiContract(apiContract);
+      res.json(result);
+    })
+  );
+
+  // Tool: Resilience Strategy Advisor
+  app.post(
+    "/api/tools/resilience-advice",
+    asyncHandler(async (req, res) => {
+      console.log("[API] Resilience advice request received");
+      const { scenario } = req.body;
+      
+      if (!scenario || typeof scenario !== "string") {
+        res.status(400).json({ error: "scenario is required" });
+        return;
+      }
+
+      const result = await getResilienceAdvice(scenario);
+      res.json(result);
+    })
+  );
+
+  // Tool: Backend Code Risk Scanner
+  app.post(
+    "/api/tools/code-scan",
+    asyncHandler(async (req, res) => {
+      console.log("[API] Code scan request received");
+      const { code } = req.body;
+      
+      if (!code || typeof code !== "string") {
+        res.status(400).json({ error: "code is required" });
+        return;
+      }
+
+      const result = await scanCode(code);
+      res.json(result);
+    })
+  );
+
+  // Tool: System Design Reviewer
+  app.post(
+    "/api/tools/system-review",
+    asyncHandler(async (req, res) => {
+      console.log("[API] System review request received");
+      const { design } = req.body;
+      
+      if (!design || typeof design !== "string") {
+        res.status(400).json({ error: "design is required" });
+        return;
+      }
+
+      const result = await reviewSystemDesign(design);
+      res.json(result);
     })
   );
 

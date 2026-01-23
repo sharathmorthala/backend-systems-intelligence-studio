@@ -1,0 +1,197 @@
+AI Backend Engineering Toolkit
+
+You are building a production-minded AI-Assisted Backend Engineering Toolkit, intended to showcase senior backend and platform engineering expertise.
+
+The application must be domain-neutral and safe for public demonstration.
+Do NOT include any business workflows, case/task concepts, or proprietary system patterns.
+
+Application Overview
+
+Build a single web application that contains multiple focused backend engineering tools, all accessible from a unified dashboard.
+
+The goal is to demonstrate:
+
+Backend architecture
+
+API design
+
+Observability
+
+Reliability engineering
+
+Responsible LLM integration
+
+Dashboard Requirements
+
+Create a main dashboard titled:
+
+AI-Assisted Backend Engineering Toolkit
+
+The dashboard should display clickable tiles for the following tools:
+
+Log & Incident Analyzer
+
+API Contract Reviewer
+
+Resilience Strategy Advisor
+
+Backend Code Risk Scanner
+
+System Design Reviewer
+
+Clicking a tile should open the corresponding tool page.
+
+Tool 1: Log & Incident Analyzer
+Input
+
+Raw application logs
+
+Stack traces
+
+Backend Responsibilities
+
+Normalize and structure logs
+
+Group similar errors deterministically
+
+Call an LLM to:
+
+Summarize root causes
+
+Identify missing context
+
+Suggest investigation or mitigation steps
+
+Output
+
+Structured JSON
+
+Error groups
+
+Probable causes
+
+Suggested actions
+
+Tool 2: API Contract Reviewer
+Input
+
+REST request/response JSON
+
+Optional OpenAPI snippets
+
+LLM Analysis
+
+Identify missing fields
+
+Flag inconsistent error models
+
+Detect breaking change risks
+
+Suggest REST best practices
+
+Tool 3: Resilience Strategy Advisor
+Input
+
+Failure scenario description (timeouts, partial failures, retries)
+
+Output
+
+Recommended retry strategy
+
+Idempotency guidance
+
+Circuit breaker suggestions
+
+What NOT to retry
+
+Tool 4: Backend Code Risk Scanner
+Input
+
+Java or Kotlin backend code
+
+Analysis
+
+Blocking calls
+
+Thread-safety risks
+
+Error handling gaps
+
+Performance concerns
+
+Emphasize this as risk detection, not automated code review replacement.
+
+Tool 5: System Design Reviewer
+Input
+
+Textual system design description
+
+Output
+
+Bottlenecks
+
+Single points of failure
+
+Scalability concerns
+
+Observability gaps
+
+LLM Integration
+
+Use the Hugging Face Inference API with an open-source model.
+
+Treat the LLM strictly as an assistant, not the system of record.
+
+All outputs must be structured and validated.
+
+Implement deterministic fallback behavior if the LLM fails or rate-limits.
+
+Architecture Requirements
+
+Backend-first design
+
+Clear API boundaries per tool
+
+Strong input validation and error handling
+
+Shared LLM client with tool-specific prompts
+
+Centralized logging and error reporting
+
+UI Requirements
+
+Clean, professional engineering UI
+
+No flashy animations or chatbot interfaces
+
+Consistent layout across tools:
+
+Left: Input
+
+Center: Structured analysis
+
+Right: LLM insights
+
+Footer must clearly state:
+
+“LLMs are used as assistants. Deterministic backend logic remains the source of truth.”
+
+Final Deliverables
+
+Fully working web application
+
+Real LLM integration via Hugging Face
+
+Clean README explaining:
+
+Overall architecture
+
+Tool responsibilities
+
+Design trade-offs
+
+Error handling & fallbacks
+
+How this could scale in production systems
+
+This application must feel like a real internal engineering tool, not a demo or toy project.

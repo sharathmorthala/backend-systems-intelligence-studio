@@ -1,18 +1,15 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { 
   Brain, 
   Target, 
   AlertCircle, 
   Lightbulb,
-  CheckCircle2,
-  CircleDot,
-  ArrowRight,
-  Shield,
-  Search,
-  Wrench
+  ChevronRight,
+  RefreshCw,
+  Settings
 } from "lucide-react";
 import type { AnalysisResult } from "@shared/schema";
 
@@ -32,51 +29,20 @@ function getConfidenceColor(confidence: "low" | "medium" | "high") {
   }
 }
 
-function getImportanceColor(importance: "optional" | "recommended" | "critical") {
-  switch (importance) {
-    case "critical":
-      return "bg-red-500/10 text-red-600 dark:text-red-400";
-    case "recommended":
-      return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
-    case "optional":
-      return "bg-blue-500/10 text-blue-600 dark:text-blue-400";
-  }
-}
-
-function getPriorityColor(priority: "low" | "medium" | "high") {
-  switch (priority) {
-    case "high":
-      return "bg-red-500/10 text-red-600 dark:text-red-400";
-    case "medium":
-      return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
-    case "low":
-      return "bg-blue-500/10 text-blue-600 dark:text-blue-400";
-  }
-}
-
-function getCategoryIcon(category: "investigation" | "mitigation" | "prevention") {
-  switch (category) {
-    case "investigation":
-      return <Search className="h-4 w-4" />;
-    case "mitigation":
-      return <Wrench className="h-4 w-4" />;
-    case "prevention":
-      return <Shield className="h-4 w-4" />;
-  }
-}
-
 export function AnalysisPanel({ analysis, usedFallback }: AnalysisPanelProps) {
   if (!analysis) {
     return (
       <Card className="h-full">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-md bg-muted">
-              <Brain className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">AI Analysis</CardTitle>
-              <CardDescription>Insights and recommendations</CardDescription>
+        <CardHeader className="pb-3 space-y-0">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base font-semibold">LLM-Assisted Analysis</CardTitle>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" data-testid="button-analysis-refresh">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" data-testid="button-analysis-settings">
+                <Settings className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -97,143 +63,137 @@ export function AnalysisPanel({ analysis, usedFallback }: AnalysisPanelProps) {
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-md bg-primary/10">
-              <Brain className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">AI Analysis</CardTitle>
-              <CardDescription>Insights and recommendations</CardDescription>
-            </div>
+      <CardHeader className="pb-3 space-y-0">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold">LLM-Assisted Analysis</CardTitle>
+          <div className="flex items-center gap-1">
+            {usedFallback && (
+              <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 mr-1">
+                Fallback
+              </Badge>
+            )}
+            <Button variant="ghost" size="icon" data-testid="button-analysis-refresh-active">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" data-testid="button-analysis-settings-active">
+              <Settings className="h-4 w-4" />
+            </Button>
           </div>
-          {usedFallback && (
-            <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
-              Fallback Mode
-            </Badge>
-          )}
         </div>
       </CardHeader>
-      <CardContent className="flex-1 min-h-0">
-        <ScrollArea className="h-[500px] pr-4">
-          <div className="space-y-6">
-            {/* Summary */}
+      <CardContent className="flex-1 min-h-0 p-0">
+        <ScrollArea className="h-[500px]">
+          <div className="px-6 pb-6 space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-                <h4 className="font-medium">Summary</h4>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed pl-6">
+              <h4 className="font-semibold mb-2">Summary</h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {analysis.summary}
               </p>
             </div>
 
-            <Separator />
-
-            {/* Root Causes */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Target className="h-4 w-4 text-destructive" />
-                <h4 className="font-medium">Probable Causes</h4>
-                <Badge variant="secondary" className="text-xs">
-                  {analysis.rootCauses.length}
-                </Badge>
+              <h4 className="font-semibold mb-3">Suggested Next Task</h4>
+              {analysis.recommendations.length > 0 && (
+                <div className="flex items-start gap-2">
+                  <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    {analysis.recommendations[0].description}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-3">Missing Data</h4>
+              <div className="space-y-2">
+                {analysis.missingContext.length > 0 ? (
+                  analysis.missingContext.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-start gap-2"
+                      data-testid={`missing-context-${item.id}`}
+                    >
+                      <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No missing data identified</p>
+                )}
               </div>
-              <div className="space-y-3 pl-6">
+            </div>
+
+            <div className="p-3 rounded-md bg-muted/50 border">
+              <p className="text-xs text-muted-foreground font-medium mb-2">Query result</p>
+              <p className="text-sm font-medium mb-2">
+                {analysis.rootCauses.length > 0 
+                  ? `"${analysis.rootCauses[0].description.substring(0, 50)}..."`
+                  : '"No critical issues found"'
+                }
+              </p>
+              <p className="text-xs text-muted-foreground">
+                The provided case data has been analyzed. Found {analysis.rootCauses.length} potential root causes 
+                and {analysis.recommendations.length} recommendations for investigation.
+              </p>
+              {analysis.missingContext.length > 0 && (
+                <div className="mt-3 pt-3 border-t">
+                  <code className="text-xs text-muted-foreground font-mono">
+                    {`{ missing_fields: [`}
+                    {analysis.missingContext.map((m, i) => (
+                      <span key={m.id}>
+                        "{m.description.split(' ')[0]}"
+                        {i < analysis.missingContext.length - 1 ? ", " : ""}
+                      </span>
+                    ))}
+                    {`] }`}
+                  </code>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-3">Probable Causes</h4>
+              <div className="space-y-2">
                 {analysis.rootCauses.map((cause) => (
                   <div
                     key={cause.id}
-                    className="p-3 rounded-md border bg-card"
+                    className="flex items-start gap-2"
                     data-testid={`root-cause-${cause.id}`}
                   >
-                    <div className="flex items-start gap-2 mb-2">
-                      <CircleDot className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <Target className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                    <div className="flex-1">
                       <p className="text-sm">{cause.description}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap ml-6">
-                      <Badge className={`text-xs ${getConfidenceColor(cause.confidence)}`}>
-                        {cause.confidence} confidence
-                      </Badge>
-                      {cause.affectedComponents.map((component) => (
-                        <Badge key={component} variant="outline" className="text-xs font-mono">
-                          {component}
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge className={`text-xs ${getConfidenceColor(cause.confidence)}`}>
+                          {cause.confidence}
                         </Badge>
-                      ))}
+                        {cause.affectedComponents.slice(0, 2).map((component) => (
+                          <Badge key={component} variant="outline" className="text-xs font-mono">
+                            {component}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <Separator />
-
-            {/* Missing Context */}
-            {analysis.missingContext.length > 0 && (
-              <>
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <AlertCircle className="h-4 w-4 text-yellow-500" />
-                    <h4 className="font-medium">Missing Context</h4>
-                    <Badge variant="secondary" className="text-xs">
-                      {analysis.missingContext.length}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2 pl-6">
-                    {analysis.missingContext.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-start gap-2 p-2 rounded-md bg-muted/50"
-                        data-testid={`missing-context-${item.id}`}
-                      >
-                        <ArrowRight className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-sm">{item.description}</p>
-                        </div>
-                        <Badge className={`text-xs shrink-0 ${getImportanceColor(item.importance)}`}>
-                          {item.importance}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <Separator />
-              </>
-            )}
-
-            {/* Recommendations */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Lightbulb className="h-4 w-4 text-yellow-500" />
-                <h4 className="font-medium">Suggested Investigation</h4>
-                <Badge variant="secondary" className="text-xs">
-                  {analysis.recommendations.length}
-                </Badge>
-              </div>
-              <div className="space-y-3 pl-6">
+              <h4 className="font-semibold mb-3">Suggested Investigation</h4>
+              <div className="space-y-2">
                 {analysis.recommendations.map((rec, index) => (
                   <div
                     key={rec.id}
-                    className="p-3 rounded-md border bg-card"
+                    className="flex items-start gap-2"
                     data-testid={`recommendation-${rec.id}`}
                   >
-                    <div className="flex items-start gap-3 mb-2">
-                      <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-medium shrink-0">
-                        {index + 1}
-                      </span>
-                      <div className="flex-1">
-                        <h5 className="font-medium text-sm mb-1">{rec.title}</h5>
-                        <p className="text-sm text-muted-foreground">{rec.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-9">
-                      <Badge className={`text-xs ${getPriorityColor(rec.priority)}`}>
-                        {rec.priority} priority
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {getCategoryIcon(rec.category)}
-                        <span className="ml-1 capitalize">{rec.category}</span>
-                      </Badge>
+                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs font-medium shrink-0">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium">{rec.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{rec.description}</p>
                     </div>
                   </div>
                 ))}

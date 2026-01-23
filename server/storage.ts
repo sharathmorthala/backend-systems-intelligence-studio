@@ -1,37 +1,38 @@
-import { type User, type InsertUser } from "@shared/schema";
+import type { AnalyzeLogsResponse, AnalysisHistoryItem } from "@shared/schema";
 import { randomUUID } from "crypto";
 
-// modify the interface with any CRUD methods
-// you might need
-
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  saveAnalysis(analysis: AnalyzeLogsResponse): Promise<AnalyzeLogsResponse>;
+  getAnalysis(id: string): Promise<AnalyzeLogsResponse | undefined>;
+  getAnalysisHistory(): Promise<AnalysisHistoryItem[]>;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+  private analyses: Map<string, AnalyzeLogsResponse>;
 
   constructor() {
-    this.users = new Map();
+    this.analyses = new Map();
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async saveAnalysis(analysis: AnalyzeLogsResponse): Promise<AnalyzeLogsResponse> {
+    this.analyses.set(analysis.id, analysis);
+    return analysis;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getAnalysis(id: string): Promise<AnalyzeLogsResponse | undefined> {
+    return this.analyses.get(id);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async getAnalysisHistory(): Promise<AnalysisHistoryItem[]> {
+    return Array.from(this.analyses.values())
+      .map((a) => ({
+        id: a.id,
+        createdAt: a.createdAt,
+        logCount: a.parsedLogs.length,
+        errorCount: a.errorGroups.reduce((sum, g) => sum + g.count, 0),
+        status: a.status,
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 }
 

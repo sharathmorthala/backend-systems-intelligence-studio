@@ -1,0 +1,141 @@
+You are continuing work on an existing AI Backend Engineering Toolkit web application.
+
+The “About the Engineer” page is already partially implemented.
+Your task is to refine, complete, and professionalize this page — not redesign it.
+
+Scope Control (Important)
+
+Do NOT change the overall layout, navigation, or visual style.
+
+Do NOT add new pages.
+
+Do NOT introduce business-domain concepts.
+
+Only enhance clarity, behavior, and correctness.
+
+About the Engineer Page – Refinement Tasks
+1. Header Section
+
+Keep the existing structure, but ensure the description text:
+
+Uses concise, senior-level language
+
+Avoids buzzwords
+
+Clearly communicates backend & platform focus
+
+Example tone:
+
+“Senior Backend & Platform Engineer focused on distributed systems, reliability, API design, and production-grade AI integration.”
+
+2. Skill Map – Hover Explanations (Key Requirement)
+
+Each skill tile must support hover or focus interaction that shows:
+
+Where the skill is used
+
+In what context (backend, platform, reliability, AI-assist)
+
+Level of depth (hands-on, production usage)
+
+Do NOT show years or percentages.
+Keep explanations factual and neutral.
+
+Example hover copy patterns:
+
+Java
+“Used for building large-scale backend services, API layers, and platform components with emphasis on reliability and maintainability.”
+
+Event-Driven Architecture
+“Designed and implemented asynchronous workflows using message brokers to decouple services and improve system resilience.”
+
+Deterministic Fallbacks
+“Ensures core system behavior remains predictable when AI or external services are unavailable.”
+
+Hover content should appear as:
+
+Tooltip
+
+Popover
+
+Or inline expandable description
+
+3. Skill Group Integrity
+
+Maintain the current groupings:
+
+Backend Core
+
+Platform & Reliability
+
+Data & Messaging
+
+AI-Assisted Engineering
+
+Ensure terminology is consistent across all groups.
+
+4. Attribution Hooks (Prepare for Personalization)
+
+Add non-intrusive placeholders (not final values yet) for:
+
+Engineer name
+
+GitHub URL
+
+LinkedIn URL
+
+These should be:
+
+Easy to update later
+
+Located in either header or footer
+
+Not visually dominant
+
+Example placeholder behavior:
+
+Small icon links
+
+Optional footer attribution
+
+5. Tone & Messaging Rules
+
+Avoid “expert”, “rockstar”, “guru”
+
+Avoid marketing language
+
+Avoid first-person storytelling
+
+The page should read like:
+
+An internal engineering profile in a serious company
+
+6. Accessibility & UX
+
+Hover content must also be accessible via keyboard focus
+
+Text contrast must remain readable in dark mode
+
+No animations beyond subtle transitions
+
+Engineering Philosophy Footer (Already Present – Verify)
+
+Ensure the footer message remains visible:
+
+“LLMs are used as assistants. Deterministic backend logic remains the source of truth.”
+
+This text must not be removed or altered.
+
+Final Outcome
+
+The “About the Engineer” page should:
+
+Clearly explain what the engineer is strong at
+
+Show how those skills manifest in the toolkit
+
+Feel professional, restrained, and senior
+
+Be safe to share publicly and on LinkedIn
+
+Do not overbuild. Precision matters more than volume.

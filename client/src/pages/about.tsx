@@ -13,7 +13,6 @@ import {
   Radio,
   HardDrive,
   Layers,
-  Cpu,
   Brain,
   FileText,
   CheckSquare,
@@ -22,10 +21,11 @@ import {
   Linkedin
 } from "lucide-react";
 
-const ENGINEER_CONFIG = {
-  name: "Engineer Name",
-  githubUrl: "https://github.com",
-  linkedinUrl: "https://linkedin.com",
+const ENGINEER = {
+  name: "Sharath Morthala",
+  title: "Senior Backend & Platform Engineer",
+  githubUrl: "https://github.com/sharathmorthala",
+  linkedinUrl: "https://www.linkedin.com/in/sharath-morthala-2657a626b",
 };
 
 interface Skill {
@@ -46,22 +46,22 @@ const skillSections: SkillSection[] = [
       {
         name: "Java",
         icon: Code2,
-        description: "Used for building large-scale backend services, API layers, and platform components with emphasis on reliability and maintainability."
+        description: "Used in production to build large-scale backend services, API layers, and platform components with emphasis on reliability, thread-safety, and maintainability."
       },
       {
         name: "Kotlin",
         icon: Code2,
-        description: "Applied in modern JVM backend development with coroutines, null-safety, and idiomatic patterns for cleaner service implementations."
+        description: "Applied in modern JVM backend development using coroutines for async processing, null-safety for reduced runtime errors, and idiomatic patterns for cleaner service implementations."
       },
       {
         name: "REST APIs",
         icon: Server,
-        description: "Designed and maintained API contracts with focus on versioning, schema validation, and backward compatibility across distributed systems."
+        description: "Designed and maintained production API contracts with focus on versioning, schema validation, backward compatibility, and consistent error handling across distributed systems."
       },
       {
         name: "Event-Driven Architecture",
         icon: Workflow,
-        description: "Designed and implemented asynchronous workflows using message brokers to decouple services and improve system resilience."
+        description: "Implemented asynchronous workflows using message brokers to decouple services, improve system resilience, and enable independent scaling of components."
       }
     ]
   },
@@ -71,22 +71,22 @@ const skillSections: SkillSection[] = [
       {
         name: "Distributed Systems",
         icon: GitBranch,
-        description: "Built and operated multi-service architectures handling consistency tradeoffs, partition tolerance, and cross-region coordination."
+        description: "Built and operated multi-service architectures handling consistency tradeoffs, partition tolerance, cross-region coordination, and data replication strategies."
       },
       {
         name: "Resilience Patterns",
         icon: Shield,
-        description: "Implemented circuit breakers, retries with backoff, bulkheads, and graceful degradation to handle partial failures in production."
+        description: "Implemented circuit breakers, retries with exponential backoff, bulkheads, and graceful degradation to maintain system availability during partial failures."
       },
       {
         name: "Observability",
         icon: Eye,
-        description: "Established logging standards, structured metrics, and distributed tracing to enable effective debugging and incident response."
+        description: "Established structured logging standards, designed metrics dashboards, and implemented distributed tracing to enable effective debugging and incident response."
       },
       {
         name: "Error Handling & Retries",
         icon: RotateCcw,
-        description: "Designed idempotent operations with exponential backoff, jitter, and dead-letter handling for reliable message processing."
+        description: "Designed idempotent operations with configurable retry policies, jitter, and dead-letter handling for reliable message processing in production systems."
       }
     ]
   },
@@ -96,22 +96,22 @@ const skillSections: SkillSection[] = [
       {
         name: "Kafka",
         icon: Radio,
-        description: "Operated Kafka clusters for event streaming, managing consumer groups, partitioning strategies, and exactly-once semantics."
+        description: "Used in production systems to implement event-driven workflows, improve service decoupling, and support scalable asynchronous processing."
       },
       {
         name: "SQL / PostgreSQL",
         icon: Database,
-        description: "Designed schemas, optimized queries, and managed transaction isolation for transactional backend services at scale."
+        description: "Designed schemas, optimized complex queries, managed transaction isolation, and implemented data migration strategies for transactional backend services."
       },
       {
         name: "NoSQL",
         icon: HardDrive,
-        description: "Applied document stores and key-value databases for specific access patterns requiring eventual consistency and horizontal scaling."
+        description: "Applied document stores and key-value databases for specific access patterns requiring eventual consistency, horizontal scaling, and high write throughput."
       },
       {
         name: "Caching Strategies",
         icon: Layers,
-        description: "Implemented cache layers with appropriate invalidation policies, TTLs, and read-through patterns to reduce database load."
+        description: "Implemented multi-layer caching with appropriate invalidation policies, TTLs, and read-through patterns to reduce database load and improve response times."
       }
     ]
   },
@@ -121,22 +121,22 @@ const skillSections: SkillSection[] = [
       {
         name: "LLM Integration",
         icon: Brain,
-        description: "Integrated LLM APIs into backend tooling with proper error handling, rate limiting, and response validation for production use."
+        description: "Integrated LLM APIs into backend tooling with proper error handling, rate limiting, timeout management, and response validation for production reliability."
       },
       {
         name: "Prompt Design",
         icon: MessageSquare,
-        description: "Crafted system prompts and structured output guidance to translate engineering problems into effective LLM queries."
+        description: "Crafted system prompts and structured output guidance to translate engineering problems into effective LLM queries with predictable response formats."
       },
       {
         name: "Structured AI Outputs",
         icon: FileText,
-        description: "Validated LLM responses against typed schemas to ensure AI outputs integrate cleanly with backend systems."
+        description: "Validated LLM responses against typed schemas using Zod to ensure AI outputs integrate cleanly with typed backend systems and maintain data integrity."
       },
       {
         name: "Deterministic Fallbacks",
         icon: CheckSquare,
-        description: "Ensures core system behavior remains predictable when AI or external services are unavailable."
+        description: "Designed to ensure core backend behavior remains predictable when AI services or external dependencies are unavailable."
       }
     ]
   }
@@ -173,14 +173,11 @@ export default function AboutPage() {
     <div className="flex flex-col h-full">
       <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Cpu className="h-5 w-5 text-primary" />
-            </div>
+          <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-xl font-semibold" data-testid="text-page-title">About the Engineer</h1>
-              <p className="text-sm text-muted-foreground" data-testid="text-page-subtitle">
-                Senior Backend & Platform Engineer focused on distributed systems, reliability, API design, and production-grade AI integration.
+              <h1 className="text-xl font-semibold" data-testid="text-engineer-name">{ENGINEER.name}</h1>
+              <p className="text-sm text-muted-foreground" data-testid="text-engineer-title">
+                {ENGINEER.title}
               </p>
             </div>
           </div>
@@ -192,7 +189,7 @@ export default function AboutPage() {
               data-testid="link-github"
             >
               <a 
-                href={ENGINEER_CONFIG.githubUrl} 
+                href={ENGINEER.githubUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 aria-label="GitHub Profile"
@@ -207,7 +204,7 @@ export default function AboutPage() {
               data-testid="link-linkedin"
             >
               <a 
-                href={ENGINEER_CONFIG.linkedinUrl} 
+                href={ENGINEER.linkedinUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 aria-label="LinkedIn Profile"
@@ -224,12 +221,13 @@ export default function AboutPage() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-muted-foreground leading-relaxed" data-testid="text-intro">
-                This toolkit reflects backend engineering practices developed through hands-on work 
-                with production systems. Each tool addresses a specific challenge: parsing logs for 
-                incident response, reviewing API contracts for consistency, advising on resilience 
-                patterns, scanning code for platform risks, and evaluating system designs for scalability. 
-                The architecture demonstrates responsible AI integration—structured outputs and 
-                deterministic fallbacks ensure reliability regardless of external service availability.
+                {ENGINEER.name} is a {ENGINEER.title} focused on distributed systems, reliability engineering, 
+                API design, and production-grade AI integration. This toolkit reflects hands-on experience 
+                building and operating scalable backend systems. Each tool addresses a specific challenge: 
+                parsing logs for incident response, reviewing API contracts for consistency, advising on 
+                resilience patterns, scanning code for platform risks, and evaluating system designs for 
+                scalability. The architecture demonstrates responsible AI integration—structured outputs 
+                and deterministic fallbacks ensure reliability regardless of external service availability.
               </p>
             </CardContent>
           </Card>
@@ -260,7 +258,10 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="border-t pt-6">
+          <div className="border-t pt-6 space-y-2">
+            <p className="text-sm text-muted-foreground text-center" data-testid="text-footer-attribution">
+              Designed and built by {ENGINEER.name}
+            </p>
             <p className="text-sm text-muted-foreground text-center" data-testid="text-footer-note">
               This page reflects engineering experience and design philosophy demonstrated throughout the toolkit.
             </p>

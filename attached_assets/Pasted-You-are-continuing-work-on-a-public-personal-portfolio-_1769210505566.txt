@@ -1,0 +1,118 @@
+You are continuing work on a public, personal portfolio web application titled
+“AI Backend Engineering Toolkit”.
+
+This application is owned by an individual engineer and is intended to be shared publicly (LinkedIn, GitHub, recruiters).
+
+Identity & Attribution (IMPORTANT – NEW REQUIREMENT)
+
+This application must clearly identify the engineer.
+
+Engineer Identity
+
+Add the following visible identity elements to the “About the Engineer” page:
+
+Name:
+Sharath Morthala
+
+Title:
+Senior Backend & Platform Engineer
+
+These must appear:
+
+Near the top of the “About the Engineer” page
+
+Clearly readable
+
+Not hidden behind hover or tooltips
+
+Professional Links
+
+Add clearly visible icon links (top-right or footer of About page):
+
+GitHub:
+https://github.com/sharathmorthala
+
+LinkedIn:
+https://www.linkedin.com/in/sharath-morthala-2657a626b
+
+These links must:
+
+Open in a new tab
+
+Use recognizable icons
+
+Be subtle but discoverable
+
+About Section – Text Update
+
+Update the description text to explicitly reference the engineer in third person.
+
+Example tone (do NOT use first-person):
+
+“Sharath Morthala is a Senior Backend & Platform Engineer focused on distributed systems, reliability engineering, API design, and production-grade AI integration. This toolkit reflects hands-on experience building and operating scalable backend systems.”
+
+Avoid:
+
+Marketing buzzwords
+
+Overclaiming
+
+First-person language (“I”, “my”)
+
+Skill Map – Contextual Personalization
+
+Keep the existing skill map UI exactly as-is.
+
+However, update hover/focus descriptions to reference real-world usage without naming employers.
+
+Example:
+
+Kafka
+“Used in production systems to implement event-driven workflows, improve service decoupling, and support scalable asynchronous processing.”
+
+Deterministic Fallbacks
+“Designed to ensure core backend behavior remains predictable when AI services or external dependencies are unavailable.”
+
+Do NOT:
+
+Mention company names
+
+Mention internal tools
+
+Mention confidential workflows
+
+Footer Attribution (Additive)
+
+Add a subtle footer line on the About page:
+
+“Designed and built by Sharath Morthala”
+
+Keep the existing philosophy statement:
+
+“LLMs are used as assistants. Deterministic backend logic remains the source of truth.”
+
+Constraints (Do Not Break These)
+
+Do NOT remove any existing tools
+
+Do NOT rename navigation items
+
+Do NOT change visual theme
+
+Do NOT add animations
+
+Do NOT add new pages
+
+Final Outcome
+
+The About page must:
+
+Clearly identify who built this
+
+Explain what kind of engineer this represents
+
+Be safe to share publicly
+
+Look credible to senior engineers, hiring managers, and recruiters
+
+This is a personal engineering portfolio, not a generic demo.

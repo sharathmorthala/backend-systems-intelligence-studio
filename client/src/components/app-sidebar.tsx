@@ -86,13 +86,13 @@ export function AppSidebar() {
             <Terminal className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-sidebar-foreground leading-tight">AI Backend</h1>
-            <h2 className="text-base font-bold text-sidebar-foreground leading-tight">Engineering</h2>
-            <h3 className="text-base font-bold text-sidebar-foreground leading-tight">Toolkit</h3>
+            <h1 className="text-base font-bold text-sidebar-foreground leading-tight">Backend Systems</h1>
+            <h2 className="text-base font-bold text-sidebar-foreground leading-tight">Intelligence</h2>
+            <h3 className="text-base font-bold text-sidebar-foreground leading-tight">Studio</h3>
           </div>
         </div>
         <p className="text-xs text-sidebar-foreground/70 leading-relaxed">
-          Production-minded tools for backend architecture, API design, and reliability engineering.
+          Production-minded backend intelligence for reliability, APIs, and distributed systems.
         </p>
       </SidebarHeader>
 

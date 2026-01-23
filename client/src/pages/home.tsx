@@ -61,9 +61,9 @@ export default function Home() {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 pb-4">
-        <h1 className="text-2xl font-bold mb-2">AI-Assisted Backend Engineering Toolkit</h1>
-        <p className="text-muted-foreground leading-relaxed max-w-3xl">
-          A production-minded toolkit demonstrating senior backend and platform engineering expertise. 
+        <h1 className="text-2xl font-bold mb-2" data-testid="text-dashboard-title">Backend Systems Intelligence Studio</h1>
+        <p className="text-muted-foreground leading-relaxed max-w-3xl" data-testid="text-dashboard-subtitle">
+          Production-minded backend intelligence for reliability, APIs, and distributed systems. 
           Select a tool below to analyze logs, review API contracts, get resilience recommendations, 
           scan code for risks, or review system designs.
         </p>

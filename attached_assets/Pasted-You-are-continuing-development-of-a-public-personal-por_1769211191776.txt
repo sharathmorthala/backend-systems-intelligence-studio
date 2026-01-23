@@ -1,0 +1,134 @@
+You are continuing development of a public, personal portfolio application owned by an individual engineer.
+
+Application Identity
+
+Application Name:
+Backend Systems Intelligence Studio
+
+Replace all existing references to:
+
+“AI Backend Engineering Toolkit”
+
+“AI Backend Toolkit”
+
+With:
+
+Backend Systems Intelligence Studio
+
+This includes:
+
+Sidebar title
+
+Page headers
+
+Metadata
+
+Documentation text
+
+Tagline (Use Consistently)
+
+Display this tagline under the main title:
+
+Production-minded backend intelligence for reliability, APIs, and distributed systems.
+
+Engineer Identity (MANDATORY)
+
+This is a public personal portfolio, not a generic demo.
+
+Add clear attribution on the About the Engineer page:
+
+Name:
+Sharath Morthala
+
+Title:
+Senior Backend & Platform Engineer
+
+Display this:
+
+Near the top of the About page
+
+As visible text (not hidden)
+
+Professional Links
+
+Add visible icon links (top-right or footer of About page):
+
+GitHub:
+https://github.com/sharathmorthala
+
+LinkedIn:
+https://www.linkedin.com/in/sharath-morthala-2657a626b
+
+These must:
+
+Open in a new tab
+
+Use standard icons
+
+Be subtle and professional
+
+About Section Text Update
+
+Rewrite the About description to explicitly reference the engineer in third person.
+
+Use this tone:
+
+“Sharath Morthala is a Senior Backend & Platform Engineer focused on distributed systems, reliability engineering, API design, and production-grade AI integration. This studio reflects real-world engineering practices developed through hands-on work with scalable backend systems.”
+
+Avoid:
+
+First-person language
+
+Employer names
+
+Proprietary workflows
+
+Skill Map Personalization
+
+Keep the existing Skill Map UI.
+
+Update hover descriptions to reflect real production usage, for example:
+
+Kafka → “Used to build event-driven backend systems enabling scalable asynchronous workflows.”
+
+Deterministic Fallbacks → “Ensures predictable system behavior when AI or external dependencies fail.”
+
+Do NOT mention:
+
+Company names
+
+Internal tools
+
+Confidential systems
+
+Footer Attribution
+
+Add this footer line on the About page:
+
+“Designed and built by Sharath Morthala”
+
+Keep the existing philosophy line:
+
+“LLMs are used as assistants. Deterministic backend logic remains the source of truth.”
+
+Constraints
+
+Do NOT add new pages
+
+Do NOT change visual theme
+
+Do NOT add animations
+
+Do NOT remove existing tools
+
+Outcome
+
+The application must clearly present:
+
+Who built it
+
+What level of engineering it represents
+
+Why it is credible for senior backend / platform roles
+
+This is a public engineering portfolio, suitable for recruiters and hiring managers.

@@ -20,6 +20,7 @@ import {
   Code, 
   Network,
   Settings,
+  User,
   Github, 
   ExternalLink 
 } from "lucide-react";
@@ -62,6 +63,11 @@ const toolNavItems = [
 ];
 
 const settingsNavItems = [
+  {
+    title: "About the Engineer",
+    url: "/about",
+    icon: User,
+  },
   {
     title: "Settings",
     url: "/settings",

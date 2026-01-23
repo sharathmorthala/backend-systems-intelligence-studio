@@ -58,6 +58,7 @@ Preferred communication style: Simple, everyday language.
   - Center: Structured analysis
   - Right: LLM insights
 - **Settings** (`client/src/pages/settings.tsx`): API key status and system configuration
+- **About** (`client/src/pages/about.tsx`): Engineer profile with skill map and tooltips
 
 ### Backend Architecture
 - **Framework**: Express.js 5 with TypeScript running on Node.js

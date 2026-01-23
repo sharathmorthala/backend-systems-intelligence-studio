@@ -17,6 +17,7 @@ import ResilienceAdvisor from "@/pages/tools/resilience-advisor";
 import CodeScanner from "@/pages/tools/code-scanner";
 import SystemReviewer from "@/pages/tools/system-reviewer";
 import SettingsPage from "@/pages/settings";
+import AboutPage from "@/pages/about";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/tools/code-scanner" component={CodeScanner} />
       <Route path="/tools/system-reviewer" component={SystemReviewer} />
       <Route path="/settings" component={SettingsPage} />
+      <Route path="/about" component={AboutPage} />
       <Route component={NotFound} />
     </Switch>
   );

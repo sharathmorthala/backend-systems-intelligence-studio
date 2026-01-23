@@ -1,0 +1,95 @@
+You are building a production-minded AI-assisted backend engineering demo, designed to showcase senior backend and platform engineering skills.
+
+The application must be domain-neutral (no business workflows, no proprietary concepts).
+
+Application Concept
+
+Build an AI-Assisted Log & Incident Analyzer web application.
+
+Functional Requirements
+
+Accept raw application logs and stack traces as input.
+
+Normalize and structure logs on the backend.
+
+Use an LLM (via the Hugging Face Inference API) to:
+
+Group similar errors.
+
+Summarize root causes.
+
+Identify missing context.
+
+Suggest mitigation or investigation steps.
+
+Return structured JSON output (no free-form blobs).
+
+LLM Integration Details
+
+Use the Hugging Face Inference API to call an open model (e.g., LLaMA-2 or equivalent) via REST.
+
+The LLM should be treated as an assistant, not the system of record.
+
+Outputs must be structured, explainable, and validated before returning to the client.
+
+If the LLM fails or rate limits, implement deterministic fallback behavior.
+
+Technical Requirements
+
+Backend-first architecture with clear API boundaries.
+
+Strong input validation, error handling, and logging.
+
+Emphasis on reliability and debuggability.
+
+UI Requirements
+
+Simple, professional UI with sections:
+
+Log Input
+
+Analysis Results
+
+Error Groups
+
+Recommendations
+
+No flashy animations, no gimmicks.
+
+AI Constraints
+
+Avoid hallucinations by using clear prompt constraints and structured return formats.
+
+The LLM response should be validated for schema compliance.
+
+Final Deliverables
+
+Working web app with frontend, backend, and real LLM integration.
+
+Clean README explaining:
+
+Architecture
+
+Design trade-offs
+
+Error handling and reliability strategies
+
+How this could scale in real systems
+
+Notes on LLM Provider
+
+Integrate the Hugging Face Inference API as the LLM backend.
+
+Document in the README how to replace this with a local or paid provider if needed.
+
+UI Expectations
+
+Clean dashboard layout:
+
+Left: Log input form
+
+Center: Structured analysis (JSON segmentation)
+
+Right: LLM insights panel
+
+Use neutral labels like: “Error Group A”, “Probable Cause”, “Suggested Investigation”.

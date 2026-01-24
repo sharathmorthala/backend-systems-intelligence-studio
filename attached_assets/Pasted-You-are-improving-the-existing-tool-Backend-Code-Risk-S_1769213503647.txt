@@ -1,0 +1,173 @@
+You are improving the existing tool Backend Code Risk Scanner in the application Backend Systems Intelligence Studio.
+
+The current implementation incorrectly reports “0 risks” for Java code that clearly contains production risks.
+
+This must be fixed.
+
+Core Requirement (CRITICAL)
+
+Risk detection must be deterministic-first.
+
+The Hugging Face LLM is used only to explain detected risks, not to decide whether a risk exists.
+
+Deterministic Risk Rules (MANDATORY)
+
+Implement the following rule-based checks for Java and Kotlin code.
+
+These rules must trigger before any LLM call.
+
+Rule 1: Blocking Network Call
+
+Condition
+
+Code contains .execute() on an HTTP client
+
+Risk
+
+Blocking I/O call
+
+Message
+
+“Blocking network call detected. This may cause thread starvation under load or when executed on request or event-loop threads.”
+
+Rule 2: Resource Leak Risk
+
+Condition
+
+Response response = is present
+
+AND no try ( or try-with-resources block in the same method
+
+Risk
+
+HTTP response not closed
+
+Message
+
+“HTTP response not closed. This can lead to connection leaks and resource exhaustion.”
+
+Rule 3: Missing HTTP Status Validation
+
+Condition
+
+.execute() is used
+
+AND no isSuccessful() or status code check is present
+
+Risk
+
+Unvalidated error responses
+
+Message
+
+“HTTP response status not validated before reading response body.”
+
+Rule 4: Null Safety Risk
+
+Condition
+
+response.body().string() is used
+
+Risk
+
+Potential NullPointerException
+
+Message
+
+“Response body accessed without null check. Response body may be null.”
+
+Risk Severity Mapping
+
+Assign severity levels:
+
+HIGH → Blocking calls, resource leaks
+
+MEDIUM → Missing error handling, null safety
+
+Output Structure (DO NOT CHANGE)
+
+The tool must return structured output with:
+
+1. Detected Risks
+
+List of risks with:
+
+Type
+
+Severity
+
+Description
+
+2. Summary
+
+Number of lines scanned
+
+Number of risks found (by severity)
+
+3. Recommendations
+
+Concrete remediation steps
+
+Hugging Face LLM Usage (STRICT)
+
+After deterministic detection:
+
+Pass detected risks to the Hugging Face LLM
+
+Ask it to:
+
+Explain why each risk matters in production
+
+Suggest best practices
+
+The LLM must not invent new risks.
+
+Fallback Behavior
+
+If the LLM is unavailable:
+
+Still show detected risks
+
+Display:
+
+“AI insights unavailable. Deterministic risk analysis completed.”
+
+UI Behavior
+
+If risks are detected, do NOT show “0 issues found”
+
+If no rules match, display:
+
+“No risks detected by current ruleset. This does not guarantee correctness.”
+
+Test Case (MUST PASS)
+
+The following code must trigger multiple risks:
+
+public String fetchUserData(Request request) throws IOException {
+    Response response = httpClient.newCall(request).execute();
+    return response.body().string();
+}
+
+
+Expected:
+
+Blocking call detected
+
+Resource leak detected
+
+Missing status validation
+
+Null safety risk
+
+Goal
+
+This tool must demonstrate:
+
+Production-grade backend risk awareness
+
+Deterministic analysis over probabilistic guessing
+
+Responsible LLM integration
+
+This is risk detection, not automated code review or code generation.

@@ -282,123 +282,345 @@ function generateResilienceFallback(scenario: string): ResilienceResult {
 }
 
 // Code Risk Scanner
+export interface CodeRisk {
+  line: number;
+  type: string;
+  description: string;
+  severity: "high" | "medium" | "low";
+}
+
 export interface CodeScanResult {
-  blockingCalls: Array<{ line: number; description: string; severity: string }>;
-  threadSafetyRisks: Array<{ line: number; description: string; severity: string }>;
-  errorHandlingGaps: Array<{ line: number; description: string; severity: string }>;
-  performanceConcerns: Array<{ line: number; description: string; severity: string }>;
+  blockingCalls: CodeRisk[];
+  threadSafetyRisks: CodeRisk[];
+  errorHandlingGaps: CodeRisk[];
+  performanceConcerns: CodeRisk[];
+  bestPractices: string[];
   summary: string;
+  llmInsights: string | null;
+  usedFallback: boolean;
 }
 
-export async function scanCode(code: string): Promise<CodeScanResult> {
-  const prompt = `<s>[INST] You are a senior backend engineer reviewing Java/Kotlin code for risks.
-
-Analyze this code and identify issues. Report line numbers accurately.
-
-${code}
-
-Respond with JSON only:
-{
-  "blockingCalls": [{"line": 10, "description": "issue description", "severity": "high|medium|low"}],
-  "threadSafetyRisks": [{"line": 5, "description": "issue description", "severity": "high|medium|low"}],
-  "errorHandlingGaps": [{"line": 15, "description": "issue description", "severity": "high|medium|low"}],
-  "performanceConcerns": [{"line": 20, "description": "issue description", "severity": "high|medium|low"}],
-  "summary": "2-3 sentence summary of code quality"
-}
-
-JSON only. [/INST]</s>`;
-
-  const llmResponse = await callLLM(prompt);
-  if (llmResponse) {
-    const parsed = parseJSON(llmResponse);
-    if (parsed) {
-      return {
-        blockingCalls: (parsed.blockingCalls || []).map((i: any) => ({
-          line: i.line || 1,
-          description: i.description || "Blocking call detected",
-          severity: i.severity || "medium",
-        })),
-        threadSafetyRisks: (parsed.threadSafetyRisks || []).map((i: any) => ({
-          line: i.line || 1,
-          description: i.description || "Thread safety risk",
-          severity: i.severity || "medium",
-        })),
-        errorHandlingGaps: (parsed.errorHandlingGaps || []).map((i: any) => ({
-          line: i.line || 1,
-          description: i.description || "Error handling gap",
-          severity: i.severity || "medium",
-        })),
-        performanceConcerns: (parsed.performanceConcerns || []).map((i: any) => ({
-          line: i.line || 1,
-          description: i.description || "Performance concern",
-          severity: i.severity || "medium",
-        })),
-        summary: parsed.summary || "Code analysis completed.",
-      };
-    }
-  }
-
-  return generateCodeScanFallback(code);
-}
-
-function generateCodeScanFallback(code: string): CodeScanResult {
+// Deterministic risk detection - runs BEFORE LLM
+function detectCodeRisksDeterministic(code: string): {
+  blockingCalls: CodeRisk[];
+  threadSafetyRisks: CodeRisk[];
+  errorHandlingGaps: CodeRisk[];
+  performanceConcerns: CodeRisk[];
+} {
   const lines = code.split('\n');
-  const blockingCalls: CodeScanResult["blockingCalls"] = [];
-  const threadSafetyRisks: CodeScanResult["threadSafetyRisks"] = [];
-  const errorHandlingGaps: CodeScanResult["errorHandlingGaps"] = [];
-  const performanceConcerns: CodeScanResult["performanceConcerns"] = [];
-
+  const blockingCalls: CodeRisk[] = [];
+  const threadSafetyRisks: CodeRisk[] = [];
+  const errorHandlingGaps: CodeRisk[] = [];
+  const performanceConcerns: CodeRisk[] = [];
+  
+  // Track context for multi-line analysis
+  let hasResponseAssignment = false;
+  let responseAssignmentLine = 0;
+  let hasTryWithResources = false;
+  let hasExecuteCall = false;
+  let executeCallLine = 0;
+  let hasStatusCheck = false;
+  let hasBodyStringCall = false;
+  let bodyStringLine = 0;
+  
+  // First pass: gather context
+  lines.forEach((line, i) => {
+    const lineNum = i + 1;
+    
+    // Check for try-with-resources
+    if (/try\s*\(/.test(line)) {
+      hasTryWithResources = true;
+    }
+    
+    // Rule 1: Blocking network call - .execute() on HTTP client
+    if (/\.execute\s*\(/.test(line)) {
+      hasExecuteCall = true;
+      executeCallLine = lineNum;
+      blockingCalls.push({
+        line: lineNum,
+        type: "Blocking I/O",
+        description: "Blocking network call detected. This may cause thread starvation under load or when executed on request or event-loop threads.",
+        severity: "high"
+      });
+    }
+    
+    // Rule 2: Resource leak - Response response = without try-with-resources
+    if (/Response\s+\w+\s*=/.test(line)) {
+      hasResponseAssignment = true;
+      responseAssignmentLine = lineNum;
+    }
+    
+    // Rule 3: Missing status validation
+    if (/\.isSuccessful\s*\(/.test(line) || /\.code\s*\(/.test(line) || /response\.code/.test(line) || /status\s*[=!]=/.test(line.toLowerCase())) {
+      hasStatusCheck = true;
+    }
+    
+    // Rule 4: Null safety - response.body().string()
+    if (/\.body\s*\(\s*\)\s*\.string\s*\(/.test(line) || /\.body\s*\(\s*\)\s*\.bytes\s*\(/.test(line)) {
+      hasBodyStringCall = true;
+      bodyStringLine = lineNum;
+      errorHandlingGaps.push({
+        line: lineNum,
+        type: "Null Safety",
+        description: "Response body accessed without null check. Response body may be null.",
+        severity: "medium"
+      });
+    }
+  });
+  
+  // Second pass: line-by-line analysis for other patterns
   lines.forEach((line, i) => {
     const lineNum = i + 1;
     const lower = line.toLowerCase();
 
-    // Blocking calls
-    if (lower.includes(".get()") && !lower.includes("optional")) {
-      blockingCalls.push({ line: lineNum, description: "Blocking .get() call without timeout", severity: "high" });
+    // Additional blocking call patterns
+    if (/\.get\s*\(\s*\)/.test(line) && !lower.includes("optional") && !lower.includes("map.get") && !lower.includes("list.get")) {
+      blockingCalls.push({
+        line: lineNum,
+        type: "Blocking Future",
+        description: "Blocking .get() call on Future without timeout. Consider using get(timeout, unit) or async handling.",
+        severity: "high"
+      });
     }
-    if (lower.includes("thread.sleep")) {
-      blockingCalls.push({ line: lineNum, description: "Thread.sleep() blocks the current thread", severity: "medium" });
+    if (/Thread\.sleep/.test(line)) {
+      blockingCalls.push({
+        line: lineNum,
+        type: "Thread Sleep",
+        description: "Thread.sleep() blocks the current thread. Avoid in request handlers or event loops.",
+        severity: "medium"
+      });
     }
-    if (lower.includes(".wait()")) {
-      blockingCalls.push({ line: lineNum, description: "Object.wait() without timeout", severity: "high" });
+    if (/\.wait\s*\(\s*\)/.test(line)) {
+      blockingCalls.push({
+        line: lineNum,
+        type: "Object Wait",
+        description: "Object.wait() without timeout may block indefinitely.",
+        severity: "high"
+      });
+    }
+    if (/\.join\s*\(\s*\)/.test(line) && !lower.includes("string")) {
+      blockingCalls.push({
+        line: lineNum,
+        type: "Thread Join",
+        description: "Thread.join() without timeout blocks until thread completes.",
+        severity: "medium"
+      });
     }
 
     // Thread safety
-    if ((lower.includes("static") && lower.includes("map")) || (lower.includes("static") && lower.includes("list"))) {
-      threadSafetyRisks.push({ line: lineNum, description: "Static mutable collection is not thread-safe", severity: "high" });
+    if (/static\s+(?:final\s+)?(?:Map|HashMap|ArrayList|List|Set|HashSet)/.test(line) && !/ConcurrentHashMap|CopyOnWriteArrayList|ConcurrentSkipListSet|Collections\.synchronized/.test(line)) {
+      threadSafetyRisks.push({
+        line: lineNum,
+        type: "Shared Mutable State",
+        description: "Static mutable collection is not thread-safe. Consider ConcurrentHashMap or Collections.synchronizedX().",
+        severity: "high"
+      });
     }
-    if (lower.includes("hashmap") && !lower.includes("concurrenthashmap")) {
-      threadSafetyRisks.push({ line: lineNum, description: "HashMap is not thread-safe, consider ConcurrentHashMap", severity: "medium" });
+    if (/new\s+HashMap\s*[<(]/.test(line) && !lower.includes("local") && !/private\s+final/.test(lines.slice(Math.max(0, i-5), i).join('\n'))) {
+      threadSafetyRisks.push({
+        line: lineNum,
+        type: "Thread Safety",
+        description: "HashMap is not thread-safe for concurrent access. Consider ConcurrentHashMap.",
+        severity: "medium"
+      });
     }
-    if (lower.includes("simpledateformat")) {
-      threadSafetyRisks.push({ line: lineNum, description: "SimpleDateFormat is not thread-safe", severity: "medium" });
+    if (/SimpleDateFormat/.test(line)) {
+      threadSafetyRisks.push({
+        line: lineNum,
+        type: "Thread Safety",
+        description: "SimpleDateFormat is not thread-safe. Use DateTimeFormatter (Java 8+) or ThreadLocal.",
+        severity: "medium"
+      });
+    }
+    if (/\+\+\s*\w+|\w+\s*\+\+/.test(line) && /static|shared|volatile/.test(lines.slice(Math.max(0, i-10), i).join('\n').toLowerCase())) {
+      threadSafetyRisks.push({
+        line: lineNum,
+        type: "Race Condition",
+        description: "Increment/decrement on potentially shared variable. Consider AtomicInteger or synchronized block.",
+        severity: "high"
+      });
     }
 
-    // Error handling
-    if (lower.includes("catch") && (lower.includes("ignore") || lower.includes("// "))) {
-      errorHandlingGaps.push({ line: lineNum, description: "Exception caught but possibly swallowed", severity: "high" });
+    // Error handling gaps
+    if (/catch\s*\(\s*Exception\s+\w+\s*\)/.test(line)) {
+      errorHandlingGaps.push({
+        line: lineNum,
+        type: "Generic Exception",
+        description: "Catching generic Exception. Consider catching specific exception types for better error handling.",
+        severity: "low"
+      });
     }
-    if (lower.includes("catch (exception") || lower.includes("catch(exception")) {
-      errorHandlingGaps.push({ line: lineNum, description: "Catching generic Exception, consider specific types", severity: "low" });
+    if (/catch\s*\(/.test(line) && (i + 1 < lines.length)) {
+      const nextLines = lines.slice(i + 1, Math.min(i + 4, lines.length)).join(' ');
+      if (/^\s*\}\s*$/.test(nextLines.trim()) || /\/\/\s*(ignore|todo|fixme)/i.test(nextLines)) {
+        errorHandlingGaps.push({
+          line: lineNum,
+          type: "Swallowed Exception",
+          description: "Exception caught but not handled. This hides errors and makes debugging difficult.",
+          severity: "high"
+        });
+      }
+    }
+    if (/throws\s+Exception\b/.test(line)) {
+      errorHandlingGaps.push({
+        line: lineNum,
+        type: "Broad Throws",
+        description: "Method throws generic Exception. Consider declaring specific checked exceptions.",
+        severity: "low"
+      });
     }
 
-    // Performance
-    if (lower.includes("findall") && lower.includes("stream")) {
-      performanceConcerns.push({ line: lineNum, description: "Possible N+1 query pattern", severity: "high" });
+    // Performance concerns
+    if (/for\s*\(.*:.*findAll|findAll.*\.forEach/.test(line) || (/findAll/.test(line) && /stream\s*\(\s*\)/.test(lines.slice(i, Math.min(i + 3, lines.length)).join(' ')))) {
+      performanceConcerns.push({
+        line: lineNum,
+        type: "N+1 Query",
+        description: "Possible N+1 query pattern. Consider using JOIN FETCH or batch loading.",
+        severity: "high"
+      });
     }
-    if (lower.includes("tolist()") && lower.includes("foreach")) {
-      performanceConcerns.push({ line: lineNum, description: "Unnecessary intermediate list creation", severity: "low" });
+    if (/\.toList\s*\(\s*\).*\.forEach|collect.*forEach/.test(line)) {
+      performanceConcerns.push({
+        line: lineNum,
+        type: "Unnecessary Collection",
+        description: "Unnecessary intermediate list creation before iteration.",
+        severity: "low"
+      });
+    }
+    if (/new\s+String\s*\(.*getBytes/.test(line)) {
+      performanceConcerns.push({
+        line: lineNum,
+        type: "String Allocation",
+        description: "Inefficient string encoding/decoding pattern.",
+        severity: "low"
+      });
     }
   });
+  
+  // Post-analysis: check for resource leak (Response without try-with-resources)
+  if (hasResponseAssignment && !hasTryWithResources) {
+    errorHandlingGaps.push({
+      line: responseAssignmentLine,
+      type: "Resource Leak",
+      description: "HTTP response not closed. This can lead to connection leaks and resource exhaustion. Use try-with-resources.",
+      severity: "high"
+    });
+  }
+  
+  // Post-analysis: check for missing status validation
+  if (hasExecuteCall && !hasStatusCheck) {
+    errorHandlingGaps.push({
+      line: executeCallLine,
+      type: "Missing Validation",
+      description: "HTTP response status not validated before reading response body. Check isSuccessful() or response code.",
+      severity: "medium"
+    });
+  }
 
-  const totalIssues = blockingCalls.length + threadSafetyRisks.length + errorHandlingGaps.length + performanceConcerns.length;
+  return { blockingCalls, threadSafetyRisks, errorHandlingGaps, performanceConcerns };
+}
+
+function generateBestPractices(risks: {
+  blockingCalls: CodeRisk[];
+  threadSafetyRisks: CodeRisk[];
+  errorHandlingGaps: CodeRisk[];
+  performanceConcerns: CodeRisk[];
+}): string[] {
+  const practices: string[] = [];
+  
+  if (risks.blockingCalls.some(r => r.type === "Blocking I/O")) {
+    practices.push("Use asynchronous HTTP clients (e.g., OkHttp with enqueue(), WebClient, or CompletableFuture) for non-blocking I/O.");
+  }
+  if (risks.errorHandlingGaps.some(r => r.type === "Resource Leak")) {
+    practices.push("Always use try-with-resources for Response objects to ensure proper cleanup.");
+  }
+  if (risks.errorHandlingGaps.some(r => r.type === "Missing Validation")) {
+    practices.push("Check response.isSuccessful() before accessing the response body to handle HTTP errors properly.");
+  }
+  if (risks.errorHandlingGaps.some(r => r.type === "Null Safety")) {
+    practices.push("Always null-check response.body() before calling .string() - the body can be null.");
+  }
+  if (risks.threadSafetyRisks.length > 0) {
+    practices.push("Prefer immutable objects and concurrent collections for shared state in multi-threaded environments.");
+  }
+  if (risks.blockingCalls.some(r => r.type === "Blocking Future")) {
+    practices.push("Use get(timeout, TimeUnit) instead of get() to prevent indefinite blocking on futures.");
+  }
+  if (risks.performanceConcerns.some(r => r.type === "N+1 Query")) {
+    practices.push("Use JOIN FETCH, @EntityGraph, or batch loading strategies to avoid N+1 query problems.");
+  }
+  
+  // Default practices if no specific issues
+  if (practices.length === 0) {
+    practices.push("No specific issues detected by current ruleset. This does not guarantee correctness.");
+    practices.push("Consider running static analysis tools like SpotBugs, PMD, or SonarQube for comprehensive coverage.");
+  }
+  
+  return practices;
+}
+
+export async function scanCode(code: string): Promise<CodeScanResult> {
+  const lines = code.split('\n');
+  
+  // STEP 1: Deterministic risk detection (ALWAYS runs first)
+  const deterministicRisks = detectCodeRisksDeterministic(code);
+  const bestPractices = generateBestPractices(deterministicRisks);
+  
+  const totalIssues = 
+    deterministicRisks.blockingCalls.length + 
+    deterministicRisks.threadSafetyRisks.length + 
+    deterministicRisks.errorHandlingGaps.length + 
+    deterministicRisks.performanceConcerns.length;
+  
+  const highCount = [
+    ...deterministicRisks.blockingCalls,
+    ...deterministicRisks.threadSafetyRisks,
+    ...deterministicRisks.errorHandlingGaps,
+    ...deterministicRisks.performanceConcerns
+  ].filter(r => r.severity === "high").length;
+  
+  const mediumCount = [
+    ...deterministicRisks.blockingCalls,
+    ...deterministicRisks.threadSafetyRisks,
+    ...deterministicRisks.errorHandlingGaps,
+    ...deterministicRisks.performanceConcerns
+  ].filter(r => r.severity === "medium").length;
+  
+  const summary = totalIssues > 0
+    ? `Scanned ${lines.length} lines of code. Found ${totalIssues} risks: ${highCount} high, ${mediumCount} medium, ${totalIssues - highCount - mediumCount} low severity.`
+    : `Scanned ${lines.length} lines of code. No risks detected by current ruleset. This does not guarantee correctness.`;
+
+  // STEP 2: LLM for explanations ONLY (not for detection)
+  let llmInsights: string | null = null;
+  
+  if (totalIssues > 0) {
+    const riskSummary = [
+      ...deterministicRisks.blockingCalls.map(r => `- Line ${r.line}: ${r.type} - ${r.description}`),
+      ...deterministicRisks.threadSafetyRisks.map(r => `- Line ${r.line}: ${r.type} - ${r.description}`),
+      ...deterministicRisks.errorHandlingGaps.map(r => `- Line ${r.line}: ${r.type} - ${r.description}`),
+      ...deterministicRisks.performanceConcerns.map(r => `- Line ${r.line}: ${r.type} - ${r.description}`),
+    ].join('\n');
+    
+    const prompt = `<s>[INST] You are a senior backend engineer. The following risks were detected in Java/Kotlin code through static analysis:
+
+${riskSummary}
+
+Explain briefly why each detected risk matters in production environments and suggest one best practice for each. Do NOT invent new risks - only explain the ones already detected.
+
+Respond in plain text, not JSON. Keep it concise (2-3 sentences per risk). [/INST]</s>`;
+
+    const llmResponse = await callLLM(prompt);
+    if (llmResponse) {
+      llmInsights = llmResponse.trim();
+    }
+  }
 
   return {
-    blockingCalls,
-    threadSafetyRisks,
-    errorHandlingGaps,
-    performanceConcerns,
-    summary: `Scanned ${lines.length} lines of code. Found ${totalIssues} potential issues: ${blockingCalls.length} blocking calls, ${threadSafetyRisks.length} thread safety risks, ${errorHandlingGaps.length} error handling gaps, ${performanceConcerns.length} performance concerns.`,
+    ...deterministicRisks,
+    bestPractices,
+    summary,
+    llmInsights,
+    usedFallback: llmInsights === null
   };
 }
 

@@ -15,10 +15,17 @@ import {
   Clock,
   Lock,
   Zap,
-  Bug
+  Bug,
+  CheckCircle,
+  Info
 } from "lucide-react";
 
-const SAMPLE_CODE = `@Service
+const SAMPLE_CODE = `public String fetchUserData(Request request) throws IOException {
+    Response response = httpClient.newCall(request).execute();
+    return response.body().string();
+}`;
+
+const SAMPLE_CODE_EXTENDED = `@Service
 public class PaymentProcessor {
     
     @Autowired
@@ -28,7 +35,8 @@ public class PaymentProcessor {
     
     public Payment processPayment(PaymentRequest request) {
         // Blocking call without timeout
-        Payment payment = gateway.charge(request);
+        Future<Payment> future = executor.submit(() -> gateway.charge(request));
+        Payment payment = future.get();
         
         // Non-thread-safe cache access
         cache.put(request.getId(), payment);
@@ -43,21 +51,28 @@ public class PaymentProcessor {
         return payment;
     }
     
-    public List<Payment> getRecentPayments() {
-        // N+1 query problem
-        List<User> users = userRepository.findAll();
-        return users.stream()
-            .flatMap(u -> paymentRepository.findByUser(u).stream())
-            .collect(Collectors.toList());
+    public String fetchData(Request request) throws IOException {
+        Response response = httpClient.newCall(request).execute();
+        return response.body().string();
     }
 }`;
 
+interface CodeRisk {
+  line: number;
+  type: string;
+  description: string;
+  severity: "high" | "medium" | "low";
+}
+
 interface ScanResult {
-  blockingCalls: Array<{ line: number; description: string; severity: string }>;
-  threadSafetyRisks: Array<{ line: number; description: string; severity: string }>;
-  errorHandlingGaps: Array<{ line: number; description: string; severity: string }>;
-  performanceConcerns: Array<{ line: number; description: string; severity: string }>;
+  blockingCalls: CodeRisk[];
+  threadSafetyRisks: CodeRisk[];
+  errorHandlingGaps: CodeRisk[];
+  performanceConcerns: CodeRisk[];
+  bestPractices: string[];
   summary: string;
+  llmInsights: string | null;
+  usedFallback: boolean;
 }
 
 export default function CodeScanner() {
@@ -74,7 +89,15 @@ export default function CodeScanner() {
       setResult(data);
       const totalIssues = data.blockingCalls.length + data.threadSafetyRisks.length + 
                           data.errorHandlingGaps.length + data.performanceConcerns.length;
-      toast({ title: "Scan Complete", description: `Found ${totalIssues} potential issues.` });
+      const highCount = [...data.blockingCalls, ...data.threadSafetyRisks, 
+                         ...data.errorHandlingGaps, ...data.performanceConcerns]
+                         .filter(r => r.severity === "high").length;
+      toast({ 
+        title: "Scan Complete", 
+        description: totalIssues > 0 
+          ? `Found ${totalIssues} risks (${highCount} high severity).`
+          : "No risks detected by current ruleset."
+      });
     },
     onError: (error: Error) => {
       toast({ title: "Scan Failed", description: error.message, variant: "destructive" });
@@ -85,12 +108,17 @@ export default function CodeScanner() {
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
-      case "high": return "bg-red-500/10 text-red-600";
-      case "medium": return "bg-yellow-500/10 text-yellow-600";
-      case "low": return "bg-blue-500/10 text-blue-600";
+      case "high": return "bg-red-500/10 text-red-600 dark:text-red-400";
+      case "medium": return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
+      case "low": return "bg-blue-500/10 text-blue-600 dark:text-blue-400";
       default: return "bg-muted text-muted-foreground";
     }
   };
+
+  const totalIssues = result 
+    ? result.blockingCalls.length + result.threadSafetyRisks.length + 
+      result.errorHandlingGaps.length + result.performanceConcerns.length 
+    : 0;
 
   return (
     <div className="h-full flex flex-col">
@@ -99,11 +127,11 @@ export default function CodeScanner() {
           <div className="p-2 rounded-lg bg-orange-500/10">
             <Code className="h-5 w-5 text-orange-500" />
           </div>
-          <h1 className="text-xl font-bold">Backend Code Risk Scanner</h1>
+          <h1 className="text-xl font-bold" data-testid="text-tool-title">Backend Code Risk Scanner</h1>
         </div>
         <p className="text-sm text-muted-foreground">
           Scan Java or Kotlin code for blocking calls, thread-safety risks, error handling gaps, and performance concerns.
-          <span className="text-yellow-600 ml-1">This is risk detection, not automated code review replacement.</span>
+          <span className="text-yellow-600 dark:text-yellow-400 ml-1">Deterministic detection runs first; LLM explains detected risks.</span>
         </p>
       </div>
 
@@ -133,16 +161,26 @@ export default function CodeScanner() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setInput(SAMPLE_CODE)}
                   disabled={scanMutation.isPending}
-                  data-testid="button-load-sample"
+                  data-testid="button-sample-minimal"
                 >
                   <FileText className="h-4 w-4 mr-1" />
-                  Sample
+                  Minimal
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setInput(SAMPLE_CODE_EXTENDED)}
+                  disabled={scanMutation.isPending}
+                  data-testid="button-sample-extended"
+                >
+                  <FileText className="h-4 w-4 mr-1" />
+                  Extended
                 </Button>
               </div>
 
@@ -161,10 +199,17 @@ export default function CodeScanner() {
             </CardContent>
           </Card>
 
-          {/* Center: Risk Categories */}
+          {/* Center: Risk Categories + Best Practices */}
           <Card className="flex flex-col min-h-0">
             <CardHeader className="pb-3 space-y-0">
-              <CardTitle className="text-base">Risk Detection</CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-base">Risk Detection</CardTitle>
+                {result && (
+                  <Badge variant={totalIssues > 0 ? "destructive" : "secondary"} className="text-xs">
+                    {totalIssues} {totalIssues === 1 ? "risk" : "risks"}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="flex-1 min-h-0">
               {!result ? (
@@ -175,6 +220,18 @@ export default function CodeScanner() {
               ) : (
                 <ScrollArea className="h-full">
                   <div className="space-y-4 pr-4">
+                    {totalIssues === 0 && (
+                      <div className="p-3 rounded-md border border-green-500/20 bg-green-500/5">
+                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="text-sm font-medium">No risks detected by current ruleset</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          This does not guarantee correctness. Consider additional static analysis tools.
+                        </p>
+                      </div>
+                    )}
+
                     {result.blockingCalls.length > 0 && (
                       <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -183,9 +240,10 @@ export default function CodeScanner() {
                         </div>
                         <div className="space-y-2">
                           {result.blockingCalls.map((issue, i) => (
-                            <div key={i} className="p-2 rounded-md border text-xs">
-                              <div className="flex items-center gap-2 mb-1">
+                            <div key={i} className="p-2 rounded-md border text-xs" data-testid={`risk-blocking-${i}`}>
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <Badge className={`text-xs ${getSeverityColor(issue.severity)}`}>{issue.severity}</Badge>
+                                <Badge variant="outline" className="text-xs">{issue.type}</Badge>
                                 <span className="text-muted-foreground">Line {issue.line}</span>
                               </div>
                               <p className="text-muted-foreground">{issue.description}</p>
@@ -194,6 +252,7 @@ export default function CodeScanner() {
                         </div>
                       </div>
                     )}
+
                     {result.threadSafetyRisks.length > 0 && (
                       <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -202,9 +261,10 @@ export default function CodeScanner() {
                         </div>
                         <div className="space-y-2">
                           {result.threadSafetyRisks.map((issue, i) => (
-                            <div key={i} className="p-2 rounded-md border text-xs">
-                              <div className="flex items-center gap-2 mb-1">
+                            <div key={i} className="p-2 rounded-md border text-xs" data-testid={`risk-thread-${i}`}>
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <Badge className={`text-xs ${getSeverityColor(issue.severity)}`}>{issue.severity}</Badge>
+                                <Badge variant="outline" className="text-xs">{issue.type}</Badge>
                                 <span className="text-muted-foreground">Line {issue.line}</span>
                               </div>
                               <p className="text-muted-foreground">{issue.description}</p>
@@ -213,62 +273,136 @@ export default function CodeScanner() {
                         </div>
                       </div>
                     )}
+
+                    {result.errorHandlingGaps.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Bug className="h-4 w-4 text-yellow-500" />
+                          <h4 className="text-sm font-medium">Error Handling ({result.errorHandlingGaps.length})</h4>
+                        </div>
+                        <div className="space-y-2">
+                          {result.errorHandlingGaps.map((issue, i) => (
+                            <div key={i} className="p-2 rounded-md border text-xs" data-testid={`risk-error-${i}`}>
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <Badge className={`text-xs ${getSeverityColor(issue.severity)}`}>{issue.severity}</Badge>
+                                <Badge variant="outline" className="text-xs">{issue.type}</Badge>
+                                <span className="text-muted-foreground">Line {issue.line}</span>
+                              </div>
+                              <p className="text-muted-foreground">{issue.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {result.performanceConcerns.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Zap className="h-4 w-4 text-purple-500" />
+                          <h4 className="text-sm font-medium">Performance ({result.performanceConcerns.length})</h4>
+                        </div>
+                        <div className="space-y-2">
+                          {result.performanceConcerns.map((issue, i) => (
+                            <div key={i} className="p-2 rounded-md border text-xs" data-testid={`risk-perf-${i}`}>
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <Badge className={`text-xs ${getSeverityColor(issue.severity)}`}>{issue.severity}</Badge>
+                                <Badge variant="outline" className="text-xs">{issue.type}</Badge>
+                                <span className="text-muted-foreground">Line {issue.line}</span>
+                              </div>
+                              <p className="text-muted-foreground">{issue.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Best Practices Section */}
+                    {result.bestPractices.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <h4 className="text-sm font-medium">Best Practices</h4>
+                        </div>
+                        <ul className="space-y-1">
+                          {result.bestPractices.map((practice, i) => (
+                            <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                              <span className="text-green-500 mt-0.5">•</span>
+                              <span>{practice}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </ScrollArea>
               )}
             </CardContent>
           </Card>
 
-          {/* Right: More Issues */}
+          {/* Right: Summary + LLM Insights */}
           <Card className="flex flex-col min-h-0">
             <CardHeader className="pb-3 space-y-0">
-              <CardTitle className="text-base">Additional Concerns</CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-base">Analysis Insights</CardTitle>
+                {result && (
+                  <Badge variant={result.usedFallback ? "secondary" : "default"} className="text-xs">
+                    {result.usedFallback ? "Deterministic" : "AI-Enhanced"}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="flex-1 min-h-0">
               {!result ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <Sparkles className="h-12 w-12 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">Detailed analysis will appear here</p>
+                  <p className="text-sm text-muted-foreground">AI insights will appear here</p>
                 </div>
               ) : (
                 <ScrollArea className="h-full">
                   <div className="space-y-4 pr-4">
                     <div>
                       <h4 className="text-sm font-medium mb-2">Summary</h4>
-                      <p className="text-sm text-muted-foreground">{result.summary}</p>
+                      <p className="text-sm text-muted-foreground" data-testid="text-summary">{result.summary}</p>
                     </div>
-                    {result.errorHandlingGaps.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Bug className="h-4 w-4 text-yellow-500" />
-                          <h4 className="text-sm font-medium">Error Handling Gaps</h4>
+
+                    {result.usedFallback && totalIssues > 0 && (
+                      <div className="p-3 rounded-md border border-yellow-500/20 bg-yellow-500/5">
+                        <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                          <Info className="h-4 w-4" />
+                          <span className="text-xs font-medium">AI insights unavailable</span>
                         </div>
-                        <div className="space-y-2">
-                          {result.errorHandlingGaps.map((issue, i) => (
-                            <div key={i} className="flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
-                              <p className="text-xs text-muted-foreground">Line {issue.line}: {issue.description}</p>
-                            </div>
-                          ))}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Deterministic risk analysis completed. LLM explanations could not be generated.
+                        </p>
+                      </div>
+                    )}
+
+                    {result.llmInsights && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">AI Explanation</h4>
+                        <div className="text-xs text-muted-foreground whitespace-pre-wrap p-3 rounded-md bg-muted/50" data-testid="text-llm-insights">
+                          {result.llmInsights}
                         </div>
                       </div>
                     )}
-                    {result.performanceConcerns.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Zap className="h-4 w-4 text-purple-500" />
-                          <h4 className="text-sm font-medium">Performance</h4>
-                        </div>
-                        <div className="space-y-2">
-                          {result.performanceConcerns.map((issue, i) => (
-                            <div key={i} className="flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 text-purple-500 mt-0.5 shrink-0" />
-                              <p className="text-xs text-muted-foreground">Line {issue.line}: {issue.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+
+                    <div className="pt-2 border-t">
+                      <h4 className="text-sm font-medium mb-2">How Detection Works</h4>
+                      <ul className="space-y-1 text-xs text-muted-foreground">
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary mt-0.5">1.</span>
+                          <span><strong>Deterministic rules</strong> detect risks using pattern matching</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary mt-0.5">2.</span>
+                          <span><strong>LLM</strong> explains why each risk matters (does not invent risks)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-primary mt-0.5">3.</span>
+                          <span><strong>Fallback</strong> ensures tool works even without AI</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </ScrollArea>
               )}

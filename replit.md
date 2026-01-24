@@ -2,9 +2,9 @@
 
 ## Overview
 
-This is a production-minded web application built by Sharath Morthala showcasing senior backend and platform engineering expertise. The studio contains 5 specialized tools for backend engineering tasks, all powered by AI assistance via the Hugging Face Inference API (Mixtral-8x7B-Instruct model) with deterministic fallback behavior ensuring reliability.
+This is a production-minded web application built by Sharath Morthala showcasing senior backend and platform engineering expertise. The studio contains 6 specialized tools for backend engineering tasks, all powered by AI assistance via the Hugging Face Inference API (Mixtral-8x7B-Instruct model) with deterministic fallback behavior ensuring reliability.
 
-**Tagline**: Production-minded backend intelligence for reliability, APIs, and distributed systems.
+**Tagline**: Production-minded backend analysis tools for engineers building reliable, scalable systems.
 
 The application demonstrates:
 - Backend architecture and API design
@@ -61,13 +61,14 @@ Preferred communication style: Simple, everyday language.
 
 ### UI Structure
 - **Sidebar** (`client/src/components/app-sidebar.tsx`): Navigation with dashboard, tool list, and footer
-- **Dashboard** (`client/src/pages/home.tsx`): Main page with 5 clickable tool tiles
+- **Dashboard** (`client/src/pages/home.tsx`): Main page with 6 clickable tool tiles
 - **Tool Pages** (`client/src/pages/tools/*.tsx`): Each tool has consistent three-column layout:
-  - Left: Input panel
+  - Left: Input panel with Clear button and Export to PDF
   - Center: Structured analysis
   - Right: LLM insights
 - **Settings** (`client/src/pages/settings.tsx`): API key status and system configuration
-- **About** (`client/src/pages/about.tsx`): Engineer profile with skill map and tooltips
+- **About** (`client/src/pages/about.tsx`): Engineer profile with circular photo, skill map with level badges, and tooltips
+- **Contact** (`client/src/pages/contact.tsx`): Contact form with client-side validation
 
 ### Backend Architecture
 - **Framework**: Express.js 5 with TypeScript running on Node.js
@@ -88,6 +89,7 @@ Preferred communication style: Simple, everyday language.
 - `POST /api/tools/code-scan` - Backend Code Risk Scanner
 - `POST /api/tools/system-review` - System Design Reviewer
 - `POST /api/tools/dependency-analyze` - Dependency Risk & Vulnerability Analyzer
+- `POST /api/contact` - Contact form submission
 - `GET /api/health` - Health check with API key status
 
 ### Data Flow
@@ -129,7 +131,20 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### AST-based Code Risk Scanner Upgrade (Latest)
+### UI Polish & Branding Updates (Latest)
+- Updated branding: "Production-minded backend analysis tools for engineers building reliable, scalable systems"
+- Added terminal prompt logo (>_) as minimal monochrome icon in sidebar header
+- Removed Replit branding and user avatar from UI
+- Updated sidebar footer to show "Built by Sharath Morthala" with GitHub link
+- Added Clear button and Export to PDF functionality to ALL 6 tool pages
+  - Clear button: icon-only (RotateCcw), clears input and results
+  - PDF export: jsPDF with page break handling for long content
+- Created Contact page with client-side validation and backend endpoint
+- Polished About page: circular profile photo, skill level badges (Advanced/Proficient) in tooltips
+- Updated Code Risk Scanner description to include all supported languages (Java, Kotlin, JavaScript, Python)
+- Added disclaimer panel to Code Risk Scanner: "This tool highlights potential risk patterns, not guaranteed failures. It complements static analysis tools—it does not replace them."
+
+### AST-based Code Risk Scanner Upgrade
 - Upgraded Backend Code Risk Scanner from regex to AST-based static analysis
   - JavaScript/TypeScript: Full AST parsing via @babel/parser and @babel/traverse
   - Java/Kotlin/Python: Structural parsing with context-aware regex

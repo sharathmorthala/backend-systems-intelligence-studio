@@ -1,0 +1,150 @@
+You are extending an existing application called Backend Systems Intelligence Studio.
+
+Add a new tool to the toolkit.
+
+Tool Name
+
+Dependency Risk & Vulnerability Analyzer
+
+Purpose
+
+This tool analyzes dependency manifest files to identify:
+
+Known vulnerability indicators
+
+Outdated or risky dependencies
+
+Unsafe version ranges
+
+Supply-chain risk patterns
+
+The goal is to surface risk signals, not to replace enterprise security scanners.
+
+Supported Inputs
+
+The tool must accept raw text input for:
+
+pom.xml
+
+build.gradle / settings.gradle
+
+package.json
+
+The user pastes the file contents into a text area.
+
+Functional Behavior
+Step 1: Deterministic Parsing
+
+Implement backend logic to:
+
+Detect dependency names and versions
+
+Identify version ranges (e.g. +, latest, ^, x)
+
+Flag missing lock files or version pinning
+
+This logic must work without AI.
+
+Step 2: Risk Classification
+
+Classify findings into:
+
+High Risk (known historically vulnerable libraries, unpinned versions)
+
+Moderate Risk (outdated major versions, deprecated libraries)
+
+Low Risk / Advisory
+
+Step 3: AI-Assisted Explanation
+
+Use an LLM only as an assistant to:
+
+Explain why a dependency is risky
+
+Provide upgrade or mitigation guidance
+
+Identify supply-chain patterns (transitive risk, stale dependencies)
+
+AI output must:
+
+Be structured
+
+Be explainable
+
+Never be the source of truth
+
+Output Structure
+
+The tool must return three distinct sections:
+
+1. Detected Risks
+
+Bullet list of issues with severity labels.
+
+2. Dependency Breakdown
+
+Per-dependency analysis:
+
+Name
+
+Version
+
+Risk level
+
+Reason
+
+3. Recommendations
+
+Actionable steps:
+
+Upgrade suggestions
+
+Version pinning
+
+CI/CD integration guidance
+
+Failure & Fallback Behavior
+
+If AI is unavailable:
+
+Still return deterministic risk findings
+
+Display a message:
+
+“AI insights unavailable. Deterministic risk analysis completed.”
+
+UI Integration
+
+Add the tool to the sidebar navigation
+
+Add a dashboard card with a short description
+
+Follow the same layout and visual style as existing tools
+
+Disclaimer (Mandatory)
+
+Display this disclaimer at the bottom of the tool:
+
+“This analyzer highlights dependency risk patterns and known indicators. It is not a replacement for enterprise vulnerability scanners or continuous security tooling.”
+
+Constraints
+
+Do NOT claim real-time CVE scanning
+
+Do NOT reference proprietary scanners
+
+Do NOT add animations
+
+Keep UI minimal and professional
+
+Outcome
+
+This tool must demonstrate:
+
+Secure-by-design thinking
+
+Supply-chain awareness
+
+Responsible AI usage
+
+Production-grade engineering judgment

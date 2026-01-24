@@ -461,6 +461,273 @@ JSON only. [/INST]</s>`;
   return generateSystemReviewFallback(design);
 }
 
+// Dependency Risk & Vulnerability Analyzer
+export interface DependencyRisk {
+  name: string;
+  version: string;
+  riskLevel: "high" | "moderate" | "low";
+  reason: string;
+}
+
+export interface DependencyAnalysisResult {
+  detectedRisks: Array<{ issue: string; severity: "high" | "moderate" | "low" }>;
+  dependencies: DependencyRisk[];
+  recommendations: string[];
+  summary: string;
+  usedFallback: boolean;
+}
+
+interface ParsedDependency {
+  name: string;
+  version: string;
+  hasRange: boolean;
+  isUnpinned: boolean;
+}
+
+// Known historically vulnerable libraries and patterns
+const VULNERABLE_PATTERNS: Record<string, { reason: string; severity: "high" | "moderate" }> = {
+  "log4j": { reason: "Historic Log4Shell vulnerability (CVE-2021-44228)", severity: "high" },
+  "log4j-core": { reason: "Historic Log4Shell vulnerability (CVE-2021-44228)", severity: "high" },
+  "jackson-databind": { reason: "Known deserialization vulnerabilities in older versions", severity: "high" },
+  "commons-collections": { reason: "Known deserialization gadget chain vulnerabilities", severity: "high" },
+  "struts": { reason: "Historic remote code execution vulnerabilities", severity: "high" },
+  "spring-core": { reason: "Check for Spring4Shell (CVE-2022-22965) in versions < 5.3.18", severity: "moderate" },
+  "lodash": { reason: "Prototype pollution vulnerabilities in older versions", severity: "moderate" },
+  "moment": { reason: "Deprecated; consider date-fns or dayjs", severity: "low" as "moderate" },
+  "request": { reason: "Deprecated and unmaintained", severity: "moderate" },
+  "event-stream": { reason: "Historic supply-chain attack (2018)", severity: "high" },
+  "ua-parser-js": { reason: "Historic supply-chain compromise", severity: "moderate" },
+  "node-ipc": { reason: "Historic protestware incident", severity: "high" },
+  "colors": { reason: "Historic sabotage incident", severity: "moderate" },
+  "faker": { reason: "Unmaintained; author deleted code", severity: "moderate" },
+};
+
+function detectManifestType(content: string): "pom" | "gradle" | "npm" | "unknown" {
+  if (content.includes("<project") && content.includes("<dependency>")) return "pom";
+  if (content.includes("dependencies {") || content.includes("implementation ") || content.includes("compile ")) return "gradle";
+  if (content.includes('"dependencies"') || content.includes('"devDependencies"')) return "npm";
+  return "unknown";
+}
+
+function parsePomDependencies(content: string): ParsedDependency[] {
+  const deps: ParsedDependency[] = [];
+  const depRegex = /<dependency>[\s\S]*?<groupId>(.*?)<\/groupId>[\s\S]*?<artifactId>(.*?)<\/artifactId>[\s\S]*?(?:<version>(.*?)<\/version>)?[\s\S]*?<\/dependency>/g;
+  
+  let match;
+  while ((match = depRegex.exec(content)) !== null) {
+    const name = `${match[1]}:${match[2]}`;
+    const version = match[3] || "UNSPECIFIED";
+    deps.push({
+      name,
+      version,
+      hasRange: version.includes("[") || version.includes("(") || version.includes(","),
+      isUnpinned: version === "UNSPECIFIED" || version.includes("LATEST") || version.includes("RELEASE"),
+    });
+  }
+  return deps;
+}
+
+function parseGradleDependencies(content: string): ParsedDependency[] {
+  const deps: ParsedDependency[] = [];
+  const patterns = [
+    /(?:implementation|compile|api|runtimeOnly|testImplementation)\s*['"]([\w.-]+):([\w.-]+):([\w.+-]+)['"]/g,
+    /(?:implementation|compile|api|runtimeOnly|testImplementation)\s*group:\s*['"]([\w.-]+)['"],\s*name:\s*['"]([\w.-]+)['"],\s*version:\s*['"]([\w.+-]+)['"]/g,
+  ];
+  
+  for (const regex of patterns) {
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      const name = `${match[1]}:${match[2]}`;
+      const version = match[3];
+      deps.push({
+        name,
+        version,
+        hasRange: version.includes("+") || version.includes("latest"),
+        isUnpinned: version === "+" || version.toLowerCase().includes("latest"),
+      });
+    }
+  }
+  return deps;
+}
+
+function parseNpmDependencies(content: string): ParsedDependency[] {
+  const deps: ParsedDependency[] = [];
+  try {
+    const pkg = JSON.parse(content);
+    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+    
+    for (const [name, version] of Object.entries(allDeps)) {
+      const v = String(version);
+      deps.push({
+        name,
+        version: v,
+        hasRange: v.includes("^") || v.includes("~") || v.includes(">") || v.includes("<") || v.includes("x") || v.includes("*"),
+        isUnpinned: v === "*" || v === "latest" || v.includes("x"),
+      });
+    }
+  } catch {
+    // Try regex fallback for malformed JSON
+    const regex = /"([\w@/-]+)":\s*"([^"]+)"/g;
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      const v = match[2];
+      deps.push({
+        name: match[1],
+        version: v,
+        hasRange: v.includes("^") || v.includes("~"),
+        isUnpinned: v === "*" || v === "latest",
+      });
+    }
+  }
+  return deps;
+}
+
+function analyzeDependenciesLocal(content: string): { 
+  dependencies: DependencyRisk[]; 
+  risks: Array<{ issue: string; severity: "high" | "moderate" | "low" }>;
+  recommendations: string[];
+  summary: string;
+} {
+  const manifestType = detectManifestType(content);
+  let parsed: ParsedDependency[] = [];
+  
+  switch (manifestType) {
+    case "pom": parsed = parsePomDependencies(content); break;
+    case "gradle": parsed = parseGradleDependencies(content); break;
+    case "npm": parsed = parseNpmDependencies(content); break;
+  }
+  
+  const dependencies: DependencyRisk[] = [];
+  const risks: Array<{ issue: string; severity: "high" | "moderate" | "low" }> = [];
+  const recommendations: string[] = [];
+  
+  if (manifestType === "unknown") {
+    risks.push({ issue: "Could not detect manifest type (pom.xml, build.gradle, or package.json)", severity: "moderate" });
+  }
+  
+  // Check for lock file indicators
+  if (manifestType === "npm" && !content.includes("lockfileVersion")) {
+    risks.push({ issue: "No package-lock.json detected - versions may drift between installs", severity: "moderate" });
+    recommendations.push("Generate and commit package-lock.json for reproducible builds");
+  }
+  
+  for (const dep of parsed) {
+    const shortName = dep.name.split(":").pop()?.toLowerCase() || dep.name.toLowerCase();
+    let riskLevel: "high" | "moderate" | "low" = "low";
+    let reason = "No known issues detected";
+    
+    // Check against known vulnerable patterns
+    for (const [pattern, info] of Object.entries(VULNERABLE_PATTERNS)) {
+      if (shortName.includes(pattern)) {
+        riskLevel = info.severity;
+        reason = info.reason;
+        risks.push({ issue: `${dep.name} - ${info.reason}`, severity: info.severity });
+        break;
+      }
+    }
+    
+    // Check for unpinned versions
+    if (dep.isUnpinned) {
+      if (riskLevel === "low") riskLevel = "high";
+      reason = reason === "No known issues detected" ? "Unpinned version - may pull unexpected updates" : reason;
+      risks.push({ issue: `${dep.name}@${dep.version} uses unpinned version`, severity: "high" });
+    } else if (dep.hasRange && riskLevel === "low") {
+      riskLevel = "moderate";
+      reason = "Version range may allow minor/patch drift";
+    }
+    
+    dependencies.push({ name: dep.name, version: dep.version, riskLevel, reason });
+  }
+  
+  // Add recommendations based on findings
+  const highRiskCount = risks.filter(r => r.severity === "high").length;
+  const hasUnpinned = parsed.some(d => d.isUnpinned);
+  
+  if (highRiskCount > 0) {
+    recommendations.push("Audit high-risk dependencies immediately and consider upgrading");
+  }
+  if (hasUnpinned) {
+    recommendations.push("Pin all dependency versions to avoid supply-chain risks");
+  }
+  if (manifestType === "npm") {
+    recommendations.push("Run 'npm audit' regularly as part of CI/CD pipeline");
+  }
+  if (manifestType === "pom" || manifestType === "gradle") {
+    recommendations.push("Integrate OWASP Dependency-Check or Snyk into build pipeline");
+  }
+  if (recommendations.length === 0) {
+    recommendations.push("Consider periodic dependency audits as part of security hygiene");
+  }
+  
+  const summary = `Analyzed ${parsed.length} dependencies from ${manifestType} manifest. Found ${highRiskCount} high-risk, ${risks.filter(r => r.severity === "moderate").length} moderate-risk issues.`;
+  
+  return { dependencies, risks, recommendations, summary };
+}
+
+export async function analyzeDependencies(manifest: string): Promise<DependencyAnalysisResult> {
+  // Step 1: Deterministic analysis
+  const localAnalysis = analyzeDependenciesLocal(manifest);
+  
+  // Step 2: Try LLM for additional insights
+  const prompt = `<s>[INST] You are a security engineer analyzing a dependency manifest for vulnerabilities and supply-chain risks.
+
+Analyze this dependency manifest and provide security insights:
+
+${manifest.substring(0, 3000)}
+
+Based on the dependencies found, provide:
+1. Additional security concerns not covered by basic pattern matching
+2. Specific upgrade recommendations for risky dependencies
+3. Supply-chain risk patterns (stale dependencies, transitive risks)
+
+Respond with JSON only:
+{
+  "additionalRisks": ["list of additional security concerns"],
+  "upgradeGuidance": ["specific upgrade recommendations"],
+  "supplyChainInsights": ["supply chain observations"],
+  "overallAssessment": "1-2 sentence security posture summary"
+}
+
+JSON only. [/INST]</s>`;
+
+  const llmResponse = await callLLM(prompt);
+  let usedFallback = true;
+  
+  if (llmResponse) {
+    const parsed = parseJSON(llmResponse);
+    if (parsed) {
+      usedFallback = false;
+      // Merge LLM insights with deterministic analysis
+      const additionalRisks = parsed.additionalRisks || [];
+      const upgradeGuidance = parsed.upgradeGuidance || [];
+      
+      for (const risk of additionalRisks) {
+        if (!localAnalysis.risks.some(r => r.issue.includes(risk))) {
+          localAnalysis.risks.push({ issue: risk, severity: "moderate" });
+        }
+      }
+      
+      for (const upgrade of upgradeGuidance) {
+        if (!localAnalysis.recommendations.includes(upgrade)) {
+          localAnalysis.recommendations.push(upgrade);
+        }
+      }
+      
+      if (parsed.overallAssessment) {
+        localAnalysis.summary += " " + parsed.overallAssessment;
+      }
+    }
+  }
+  
+  return {
+    detectedRisks: localAnalysis.risks,
+    dependencies: localAnalysis.dependencies,
+    recommendations: localAnalysis.recommendations,
+    summary: localAnalysis.summary,
+    usedFallback,
+  };
+}
+
 function generateSystemReviewFallback(design: string): SystemReviewResult {
   const lower = design.toLowerCase();
   const bottlenecks: SystemReviewResult["bottlenecks"] = [];

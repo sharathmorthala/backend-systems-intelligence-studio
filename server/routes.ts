@@ -7,7 +7,8 @@ import {
   reviewApiContract, 
   getResilienceAdvice, 
   scanCode, 
-  reviewSystemDesign 
+  reviewSystemDesign,
+  analyzeDependencies
 } from "./tool-services";
 import { analyzeLogsRequestSchema, type AnalyzeLogsResponse } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -114,7 +115,7 @@ export async function registerRoutes(
   app.get(
     "/api/analysis/:id",
     asyncHandler(async (req, res) => {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const analysis = await storage.getAnalysis(id);
       
       if (!analysis) {
@@ -199,6 +200,23 @@ export async function registerRoutes(
       }
 
       const result = await reviewSystemDesign(design);
+      res.json(result);
+    })
+  );
+
+  // Tool: Dependency Risk & Vulnerability Analyzer
+  app.post(
+    "/api/tools/dependency-analyze",
+    asyncHandler(async (req, res) => {
+      console.log("[API] Dependency analysis request received");
+      const { manifest } = req.body;
+      
+      if (!manifest || typeof manifest !== "string") {
+        res.status(400).json({ error: "manifest is required" });
+        return;
+      }
+
+      const result = await analyzeDependencies(manifest);
       res.json(result);
     })
   );

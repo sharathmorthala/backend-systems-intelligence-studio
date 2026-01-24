@@ -22,7 +22,8 @@ import {
   Settings,
   User,
   Github, 
-  ExternalLink 
+  ExternalLink,
+  Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -59,6 +60,11 @@ const toolNavItems = [
     title: "System Design Reviewer",
     url: "/tools/system-reviewer",
     icon: Network,
+  },
+  {
+    title: "Dependency Analyzer",
+    url: "/tools/dependency-analyzer",
+    icon: Package,
   },
 ];
 

@@ -6,6 +6,7 @@ import {
   Shield, 
   Code, 
   Network,
+  Package,
   ArrowRight
 } from "lucide-react";
 
@@ -54,6 +55,15 @@ const tools = [
     href: "/tools/system-reviewer",
     color: "text-red-500",
     bgColor: "bg-red-500/10",
+  },
+  {
+    id: "dependency-analyzer",
+    title: "Dependency Risk Analyzer",
+    description: "Analyze dependency manifests (pom.xml, package.json, build.gradle) for vulnerabilities, unsafe versions, and supply-chain risks.",
+    icon: Package,
+    href: "/tools/dependency-analyzer",
+    color: "text-cyan-500",
+    bgColor: "bg-cyan-500/10",
   },
 ];
 

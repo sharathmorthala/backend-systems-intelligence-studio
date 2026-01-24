@@ -14,6 +14,7 @@ import { sendContactEmail } from "./email-service";
 import { analyzeLogsRequestSchema, type AnalyzeLogsResponse } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { fromZodError } from "zod-validation-error";
+import { z } from "zod";
 
 // Error handling middleware
 function asyncHandler(
@@ -227,15 +228,26 @@ export async function registerRoutes(
     "/api/contact",
     asyncHandler(async (req, res) => {
       console.log("[API] Contact form submission received");
-      const { name, email, message } = req.body;
       
-      if (!name || !email || !message) {
-        res.status(400).json({ error: "Name, email, and message are required" });
+      // Validate input with Zod
+      const contactSchema = z.object({
+        name: z.string().min(1, "Name is required").max(100, "Name too long"),
+        email: z.string().email("Invalid email format").max(254, "Email too long"),
+        message: z.string().min(1, "Message is required").max(5000, "Message too long")
+      });
+      
+      const parseResult = contactSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        const error = fromZodError(parseResult.error);
+        res.status(400).json({ error: error.message });
         return;
       }
-
-      console.log(`[Contact] From: ${name} <${email}>`);
-      console.log(`[Contact] Message: ${message}`);
+      
+      const { name, email, message } = parseResult.data;
+      
+      // Log only non-sensitive info
+      console.log(`[Contact] New submission from: ${email}`);
       
       // Send email notification via Resend
       const emailResult = await sendContactEmail({ name, email, message });

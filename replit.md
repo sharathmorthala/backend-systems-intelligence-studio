@@ -29,9 +29,10 @@ The application demonstrates:
 - **Output**: Retry strategies, idempotency guidance, circuit breaker config, what NOT to retry
 
 ### 4. Backend Code Risk Scanner
-- **Input**: Java or Kotlin backend code
-- **Analysis**: Detects blocking calls, thread-safety risks, error handling gaps
-- **Output**: Risk categorization by severity and line number
+- **Input**: JavaScript, TypeScript, Java, Kotlin, or Python code
+- **Analysis**: AST-based static analysis for JavaScript (via @babel/parser), structural parsing for other languages
+- **Detection**: Undeclared variables, unsafe property access, blocking I/O, resource leaks, empty catch blocks, null safety risks
+- **Output**: Risk categorization by severity and line number, with Best Practices recommendations
 
 ### 5. System Design Reviewer
 - **Input**: System design descriptions
@@ -128,14 +129,25 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### Backend Systems Intelligence Studio (Latest)
-- Fixed Backend Code Risk Scanner: now uses deterministic detection FIRST
-  - Rule 1: Blocking network calls (.execute())
-  - Rule 2: Resource leaks (Response without try-with-resources)
-  - Rule 3: Missing HTTP status validation (no isSuccessful() check)
-  - Rule 4: Null safety risks (.body().string() without null check)
-  - LLM only explains detected risks, does not invent new ones
-  - Added Best Practices section to center column
+### AST-based Code Risk Scanner Upgrade (Latest)
+- Upgraded Backend Code Risk Scanner from regex to AST-based static analysis
+  - JavaScript/TypeScript: Full AST parsing via @babel/parser and @babel/traverse
+  - Java/Kotlin/Python: Structural parsing with context-aware regex
+- New JavaScript rules:
+  - Undeclared variable detection (tracks declarations vs usage)
+  - Unsafe property access chains (user.settings.id with depth analysis)
+  - Blocking synchronous calls (readFileSync, execSync)
+  - Empty catch blocks
+- Enhanced Java/Kotlin rules:
+  - Blocking network calls (.execute())
+  - Resource leaks (Response without try-with-resources)
+  - Missing HTTP status validation (no isSuccessful() check)
+  - Null safety risks (.body().string() without null check)
+- Python rules: broad except, bare except, blocking in async context
+- Design: Deterministic detection runs FIRST, LLM only explains detected risks
+- Core services: server/ast-analyzer.ts (new), server/tool-services.ts (updated)
+
+### Backend Systems Intelligence Studio
 - Added Dependency Risk & Vulnerability Analyzer (6th tool)
 - Created main dashboard with 6 clickable tool tiles
 - Built 6 specialized tool pages with consistent three-column layout

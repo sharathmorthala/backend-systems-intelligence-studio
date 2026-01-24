@@ -71,12 +71,18 @@ export default function Home() {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 pb-4">
-        <h1 className="text-2xl font-bold mb-2" data-testid="text-dashboard-title">Backend Systems Intelligence Studio</h1>
-        <p className="text-muted-foreground leading-relaxed max-w-3xl" data-testid="text-dashboard-subtitle">
-          Production-minded backend analysis tools for engineers building reliable, scalable systems.
-          This studio combines deterministic analysis with AI-assisted reasoning to evaluate logs, APIs, 
-          code, dependencies, and system designs—without replacing engineering judgment.
-        </p>
+        <h1 className="text-2xl font-bold mb-3" data-testid="text-dashboard-title">Backend Systems Intelligence Studio</h1>
+        <div className="text-muted-foreground leading-relaxed max-w-3xl space-y-3" data-testid="text-dashboard-subtitle">
+          <p>
+            Backend Systems Intelligence Studio is an interactive engineering portfolio that demonstrates how complex backend systems are analyzed, debugged, and improved in real-world environments.
+          </p>
+          <p>
+            It helps backend engineers, platform teams, and system designers explore how logs, APIs, code, dependencies, and system designs can be evaluated for reliability, scalability, and risk—using deterministic analysis first, with AI used strictly as an assistive layer.
+          </p>
+          <p>
+            This studio was built to showcase how I think as an engineer: structured problem analysis, production-minded decision making, and responsible AI integration—beyond what a résumé can show.
+          </p>
+        </div>
       </div>
 
       <div className="flex-1 p-6 pt-2">

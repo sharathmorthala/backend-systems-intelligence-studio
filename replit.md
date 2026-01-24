@@ -129,6 +129,13 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### Backend Systems Intelligence Studio (Latest)
+- Fixed Backend Code Risk Scanner: now uses deterministic detection FIRST
+  - Rule 1: Blocking network calls (.execute())
+  - Rule 2: Resource leaks (Response without try-with-resources)
+  - Rule 3: Missing HTTP status validation (no isSuccessful() check)
+  - Rule 4: Null safety risks (.body().string() without null check)
+  - LLM only explains detected risks, does not invent new ones
+  - Added Best Practices section to center column
 - Added Dependency Risk & Vulnerability Analyzer (6th tool)
 - Created main dashboard with 6 clickable tool tiles
 - Built 6 specialized tool pages with consistent three-column layout

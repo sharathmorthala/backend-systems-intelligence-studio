@@ -18,7 +18,7 @@ import {
   Shield, 
   Code, 
   Network,
-  Settings,
+  BookOpen,
   User,
   Github,
   Package,
@@ -67,7 +67,7 @@ const toolNavItems = [
   },
 ];
 
-const settingsNavItems = [
+const bottomNavItems = [
   {
     title: "About the Engineer",
     url: "/about",
@@ -79,9 +79,9 @@ const settingsNavItems = [
     icon: Mail,
   },
   {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
+    title: "Documentation",
+    url: "/documentation",
+    icon: BookOpen,
   },
 ];
 
@@ -154,13 +154,13 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {settingsNavItems.map((item) => (
+              {bottomNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
                     isActive={location === item.url}
                     className="h-10"
-                    data-testid={`nav-${item.title.toLowerCase()}`}
+                    data-testid={`nav-${item.url.slice(1)}`}
                   >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />

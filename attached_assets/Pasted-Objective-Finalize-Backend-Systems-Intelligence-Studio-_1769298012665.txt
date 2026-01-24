@@ -1,0 +1,304 @@
+Objective
+
+Finalize Backend Systems Intelligence Studio for public launch by removing unnecessary configuration UI and replacing it with a professional, interactive documentation experience that clearly explains the purpose, architecture, and tools of the platform.
+
+The UI is already built. Do not redesign the app structure. Only modify navigation, routing, and content as described.
+
+1. Remove Settings Completely
+
+Remove the Settings tab from the left sidebar
+
+Remove the /settings route entirely
+
+Remove all settings-related components, including:
+
+API key configuration UI
+
+LLM model selector UI
+
+System status UI
+
+Rationale:
+This is a public-facing portfolio tool. End users should not configure infrastructure-level settings.
+
+2. Replace “Settings” with “Documentation”
+Navigation Changes
+
+In the left sidebar, replace the “Settings” item with Documentation
+
+The top-right “Documentation” button should now navigate to the same Documentation page
+
+Ensure both navigation paths point to the same /documentation route
+
+3. Create a Dedicated Documentation Page
+
+Create a new page /documentation with a clean, readable, UI-driven layout — not a wall of text.
+
+Use:
+
+Section cards
+
+Icons
+
+Expandable panels or accordions
+
+Clear headings
+
+Short paragraphs
+
+Subtle dividers
+
+This should feel like product documentation, not a README.
+
+4. Documentation Content (Exact Wording + Structure)
+📘 Page Title
+
+Backend Systems Intelligence Studio
+
+Subtitle
+
+Production-minded backend analysis tools for engineers building reliable, scalable systems.
+
+Section 1: What Is This?
+
+Backend Systems Intelligence Studio is a professional engineering toolkit designed to analyze backend systems through a combination of deterministic analysis and AI-assisted reasoning.
+
+It focuses on how production systems fail, how APIs evolve, how code degrades under load, and how system designs scale over time.
+
+This platform does not replace engineering judgment.
+It augments it by making risks, inconsistencies, and design gaps easier to surface and reason about.
+
+Section 2: Who Is This For?
+
+Use a visually separated list:
+
+Backend Engineers
+
+Platform Engineers
+
+Senior / Staff Engineers
+
+Technical Leads
+
+Engineers preparing for system design or architecture discussions
+
+Emphasize:
+
+Production systems
+
+Reliability
+
+Scalability
+
+Long-term maintainability
+
+Section 3: Design Philosophy
+
+Display this as a highlighted card or callout.
+
+Core Principles:
+
+Deterministic analysis runs first
+
+AI is used for explanation, not decision-making
+
+Structured outputs over free-form text
+
+Explicit fallbacks when AI is unavailable
+
+Tools reflect real-world engineering tradeoffs
+
+Footer note:
+
+LLMs are used as assistants. Deterministic backend logic remains the source of truth.
+
+5. Tool-by-Tool Documentation (Core Section)
+
+Each tool should have:
+
+Icon
+
+Title
+
+Short description
+
+“What it analyzes”
+
+“What it does not do”
+
+🔍 Log & Incident Analyzer
+
+Purpose:
+Analyze application logs and stack traces to identify incident patterns and root causes.
+
+What it does:
+
+Groups similar errors
+
+Highlights recurring failures
+
+Identifies likely root causes
+
+Suggests investigation paths
+
+What it does not do:
+
+It does not auto-fix issues
+
+It does not replace observability tooling
+
+📜 API Contract Reviewer
+
+Purpose:
+Review REST request/response JSON and OpenAPI specifications for contract risks.
+
+What it does:
+
+Detects missing or inconsistent fields
+
+Flags breaking changes
+
+Identifies error model inconsistencies
+
+What it does not do:
+
+It does not generate APIs
+
+It does not enforce schemas automatically
+
+🛡 Resilience Strategy Advisor
+
+Purpose:
+Evaluate failure scenarios and recommend resilience patterns.
+
+What it does:
+
+Suggests retries, timeouts, circuit breakers
+
+Highlights unsafe retry patterns
+
+Identifies idempotency requirements
+
+What it does not do:
+
+It does not implement resilience automatically
+
+It does not simulate traffic
+
+🧠 Backend Code Risk Scanner
+
+Purpose:
+Statically analyze backend code for runtime and design risks.
+
+Supported languages:
+
+Java
+
+Kotlin
+
+JavaScript
+
+Python
+
+What it does:
+
+Detects blocking calls
+
+Flags thread-safety risks
+
+Identifies unsafe access patterns
+
+Highlights error-handling gaps
+
+How it works:
+
+Deterministic pattern detection runs first
+
+LLM explains why detected risks matter
+
+What it does not do:
+
+It is not a full static analyzer
+
+It does not replace linters or SAST tools
+
+🧩 System Design Reviewer
+
+Purpose:
+Review system design descriptions for architectural risks.
+
+What it does:
+
+Identifies bottlenecks
+
+Flags single points of failure
+
+Highlights observability gaps
+
+Evaluates scalability concerns
+
+What it does not do:
+
+It does not generate system designs
+
+It does not replace architecture reviews
+
+📦 Dependency Risk Analyzer
+
+Purpose:
+Analyze dependency manifests for known risks.
+
+Supported files:
+
+pom.xml
+
+build.gradle
+
+package.json
+
+What it does:
+
+Highlights vulnerable dependencies
+
+Flags outdated versions
+
+Identifies supply-chain risk patterns
+
+What it does not do:
+
+It does not replace enterprise vulnerability scanners
+
+It does not perform runtime dependency resolution
+
+6. UI & UX Requirements
+
+Documentation must be:
+
+Scannable
+
+Visually structured
+
+Mobile-friendly
+
+Avoid long paragraphs
+
+Prefer cards, lists, and collapsible sections
+
+No configuration inputs on this page
+
+7. Final Cleanup
+
+Ensure no broken links
+
+Ensure Documentation button works from:
+
+Sidebar
+
+Top navigation
+
+Remove any reference to Settings across the app
+
+Final Instruction
+
+Implement these changes cleanly and incrementally.
+Do not reintroduce Settings or configuration UI.

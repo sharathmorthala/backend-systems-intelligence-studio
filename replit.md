@@ -66,7 +66,7 @@ Preferred communication style: Simple, everyday language.
   - Left: Input panel with Clear button and Export to PDF
   - Center: Structured analysis
   - Right: LLM insights
-- **Settings** (`client/src/pages/settings.tsx`): API key status and system configuration
+- **Documentation** (`client/src/pages/documentation.tsx`): Interactive documentation with tool guides and design philosophy
 - **About** (`client/src/pages/about.tsx`): Engineer profile with circular photo, skill map with level badges, and tooltips
 - **Contact** (`client/src/pages/contact.tsx`): Contact form with client-side validation and email delivery via Resend
 

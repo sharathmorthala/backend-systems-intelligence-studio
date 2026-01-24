@@ -8,7 +8,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { FileText } from "lucide-react";
 import Home from "@/pages/home";
 import LogAnalyzer from "@/pages/tools/log-analyzer";
@@ -19,6 +18,7 @@ import SystemReviewer from "@/pages/tools/system-reviewer";
 import DependencyAnalyzer from "@/pages/tools/dependency-analyzer";
 import SettingsPage from "@/pages/settings";
 import AboutPage from "@/pages/about";
+import ContactPage from "@/pages/contact";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,6 +33,7 @@ function Router() {
       <Route path="/tools/dependency-analyzer" component={DependencyAnalyzer} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/about" component={AboutPage} />
+      <Route path="/contact" component={ContactPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -62,9 +63,6 @@ function App() {
                       Documentation
                     </Button>
                     <ThemeToggle />
-                    <Avatar className="h-9 w-9" data-testid="avatar-user">
-                      <AvatarFallback className="bg-orange-500 text-white text-sm">U</AvatarFallback>
-                    </Avatar>
                   </div>
                 </header>
                 <main className="flex-1 overflow-auto bg-muted/30">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { jsPDF } from "jspdf";
 import { 
   FileSearch, 
   Sparkles, 
@@ -16,7 +17,9 @@ import {
   Copy,
   Target,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  RotateCcw,
+  Download
 } from "lucide-react";
 import type { AnalyzeLogsResponse } from "@shared/schema";
 
@@ -93,6 +96,83 @@ export default function LogAnalyzer() {
       reader.onload = (e) => setLogs(e.target?.result as string);
       reader.readAsText(file);
     }
+  };
+
+  const handleClear = () => {
+    setLogs("");
+    setAnalysisResult(null);
+  };
+
+  const handleExportPDF = () => {
+    if (!analysisResult) return;
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+    
+    doc.setFontSize(16);
+    doc.text("Log & Incident Analyzer - Analysis Report", 14, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y);
+    y += 15;
+    
+    if (analysisResult.analysis?.summary) {
+      doc.setFontSize(12);
+      doc.text("Summary", 14, y);
+      y += 7;
+      doc.setFontSize(10);
+      const summaryLines = doc.splitTextToSize(analysisResult.analysis.summary, pageWidth - 28);
+      doc.text(summaryLines, 14, y);
+      y += summaryLines.length * 5 + 10;
+    }
+    
+    if (analysisResult.errorGroups.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Error Groups", 14, y);
+      y += 7;
+      
+      analysisResult.errorGroups.forEach((group, i) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.text(`${i + 1}. [${group.severity}] ${group.label} (${group.count}x)`, 14, y);
+        y += 6;
+      });
+      y += 5;
+    }
+    
+    if (analysisResult.analysis?.rootCauses && analysisResult.analysis.rootCauses.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Probable Causes", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      analysisResult.analysis.rootCauses.forEach((cause) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const causeLines = doc.splitTextToSize(`- [${cause.confidence}] ${cause.description}`, pageWidth - 28);
+        doc.text(causeLines, 14, y);
+        y += causeLines.length * 4 + 2;
+      });
+      y += 5;
+    }
+    
+    if (analysisResult.analysis?.recommendations && analysisResult.analysis.recommendations.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Suggested Actions", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      analysisResult.analysis.recommendations.forEach((rec, i) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const recLines = doc.splitTextToSize(`${i + 1}. ${rec.title}: ${rec.description}`, pageWidth - 28);
+        doc.text(recLines, 14, y);
+        y += recLines.length * 4 + 2;
+      });
+    }
+    
+    doc.save("log-analysis-report.pdf");
   };
 
   const lines = logs.split('\n');
@@ -172,18 +252,39 @@ export default function LogAnalyzer() {
                 )}
               </div>
 
-              <Button 
-                onClick={() => analyzeMutation.mutate(logs)} 
-                disabled={!logs.trim() || analyzeMutation.isPending}
-                className="w-full"
-                data-testid="button-analyze"
-              >
-                {analyzeMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analyzing...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" />Analyze Logs</>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => analyzeMutation.mutate(logs)} 
+                  disabled={!logs.trim() || analyzeMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-analyze"
+                >
+                  {analyzeMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analyzing...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4 mr-2" />Analyze Logs</>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClear}
+                  disabled={analyzeMutation.isPending || (!logs && !analysisResult)}
+                  data-testid="button-clear-all"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+              {analysisResult && (
+                <Button
+                  variant="outline"
+                  onClick={handleExportPDF}
+                  className="w-full"
+                  data-testid="button-export-pdf"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as PDF
+                </Button>
+              )}
             </CardContent>
           </Card>
 

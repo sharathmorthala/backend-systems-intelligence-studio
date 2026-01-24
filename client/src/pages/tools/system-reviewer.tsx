@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { jsPDF } from "jspdf";
 import { 
   Network, 
   Sparkles, 
@@ -15,7 +16,9 @@ import {
   AlertTriangle,
   Activity,
   Server,
-  Eye
+  Eye,
+  RotateCcw,
+  Download
 } from "lucide-react";
 
 const SAMPLE_DESIGN = `System: E-commerce Order Processing
@@ -83,6 +86,105 @@ export default function SystemReviewer() {
     }
   };
 
+  const handleClear = () => {
+    setInput("");
+    setResult(null);
+  };
+
+  const handleExportPDF = () => {
+    if (!result) return;
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+    
+    doc.setFontSize(16);
+    doc.text("System Design Reviewer - Analysis Report", 14, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y);
+    y += 15;
+    
+    doc.setFontSize(12);
+    doc.text("Summary", 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    const summaryLines = doc.splitTextToSize(result.summary, pageWidth - 28);
+    doc.text(summaryLines, 14, y);
+    y += summaryLines.length * 5 + 10;
+    
+    if (result.bottlenecks.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Bottlenecks", 14, y);
+      y += 7;
+      result.bottlenecks.forEach((issue, i) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.text(`${i + 1}. [${issue.severity}] ${issue.component}`, 14, y);
+        y += 5;
+        const descLines = doc.splitTextToSize(issue.description, pageWidth - 28);
+        doc.text(descLines, 18, y);
+        y += descLines.length * 4 + 5;
+      });
+    }
+    
+    if (result.singlePointsOfFailure.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Single Points of Failure", 14, y);
+      y += 7;
+      result.singlePointsOfFailure.forEach((issue, i) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.text(`${i + 1}. ${issue.component}`, 14, y);
+        y += 5;
+        const riskLines = doc.splitTextToSize(`Risk: ${issue.risk}`, pageWidth - 28);
+        doc.text(riskLines, 18, y);
+        y += riskLines.length * 4 + 2;
+        const mitLines = doc.splitTextToSize(`Mitigation: ${issue.mitigation}`, pageWidth - 28);
+        doc.text(mitLines, 18, y);
+        y += mitLines.length * 4 + 5;
+      });
+    }
+    
+    if (result.scalabilityConcerns.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Scalability Concerns", 14, y);
+      y += 7;
+      result.scalabilityConcerns.forEach((issue, i) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.text(`${i + 1}. ${issue.area}`, 14, y);
+        y += 5;
+        const descLines = doc.splitTextToSize(issue.description, pageWidth - 28);
+        doc.text(descLines, 18, y);
+        y += descLines.length * 4 + 2;
+        const recLines = doc.splitTextToSize(`Recommendation: ${issue.recommendation}`, pageWidth - 28);
+        doc.text(recLines, 18, y);
+        y += recLines.length * 4 + 5;
+      });
+    }
+    
+    if (result.observabilityGaps.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Observability Gaps", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      result.observabilityGaps.forEach((issue) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const gapLines = doc.splitTextToSize(`- ${issue.area}: ${issue.description}`, pageWidth - 28);
+        doc.text(gapLines, 14, y);
+        y += gapLines.length * 4 + 2;
+      });
+    }
+    
+    doc.save("system-review-report.pdf");
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 pb-4 border-b">
@@ -127,18 +229,39 @@ export default function SystemReviewer() {
                 </Button>
               </div>
 
-              <Button 
-                onClick={() => reviewMutation.mutate(input)} 
-                disabled={!input.trim() || reviewMutation.isPending}
-                className="w-full"
-                data-testid="button-review"
-              >
-                {reviewMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Reviewing...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" />Review Design</>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => reviewMutation.mutate(input)} 
+                  disabled={!input.trim() || reviewMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-review"
+                >
+                  {reviewMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Reviewing...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4 mr-2" />Review Design</>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClear}
+                  disabled={reviewMutation.isPending || (!input && !result)}
+                  data-testid="button-clear"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+              {result && (
+                <Button
+                  variant="outline"
+                  onClick={handleExportPDF}
+                  className="w-full"
+                  data-testid="button-export-pdf"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as PDF
+                </Button>
+              )}
             </CardContent>
           </Card>
 

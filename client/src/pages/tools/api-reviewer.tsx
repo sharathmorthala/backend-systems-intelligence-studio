@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { jsPDF } from "jspdf";
 import { 
   FileCode, 
   Sparkles, 
@@ -14,7 +15,9 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Info
+  Info,
+  RotateCcw,
+  Download
 } from "lucide-react";
 
 const SAMPLE_API = `{
@@ -69,6 +72,96 @@ export default function ApiReviewer() {
 
   const lines = input.split('\n');
 
+  const handleClear = () => {
+    setInput("");
+    setResult(null);
+  };
+
+  const handleExportPDF = () => {
+    if (!result) return;
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+    
+    doc.setFontSize(16);
+    doc.text("API Contract Reviewer - Analysis Report", 14, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y);
+    y += 15;
+    
+    doc.setFontSize(12);
+    doc.text("Summary", 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    const summaryLines = doc.splitTextToSize(result.summary, pageWidth - 28);
+    doc.text(summaryLines, 14, y);
+    y += summaryLines.length * 5 + 10;
+    
+    if (result.missingFields.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Missing Fields", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      result.missingFields.forEach((field) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const fieldLines = doc.splitTextToSize(`- ${field}`, pageWidth - 28);
+        doc.text(fieldLines, 14, y);
+        y += fieldLines.length * 4 + 2;
+      });
+      y += 5;
+    }
+    
+    if (result.inconsistencies.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Inconsistencies", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      result.inconsistencies.forEach((item) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const itemLines = doc.splitTextToSize(`- ${item}`, pageWidth - 28);
+        doc.text(itemLines, 14, y);
+        y += itemLines.length * 4 + 2;
+      });
+      y += 5;
+    }
+    
+    if (result.breakingChangeRisks.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Breaking Change Risks", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      result.breakingChangeRisks.forEach((risk) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const riskLines = doc.splitTextToSize(`- ${risk}`, pageWidth - 28);
+        doc.text(riskLines, 14, y);
+        y += riskLines.length * 4 + 2;
+      });
+      y += 5;
+    }
+    
+    if (result.bestPractices.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Best Practices", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      result.bestPractices.forEach((practice) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const practiceLines = doc.splitTextToSize(`- ${practice}`, pageWidth - 28);
+        doc.text(practiceLines, 14, y);
+        y += practiceLines.length * 4 + 2;
+      });
+    }
+    
+    doc.save("api-review-report.pdf");
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 pb-4 border-b">
@@ -122,18 +215,39 @@ export default function ApiReviewer() {
                 </Button>
               </div>
 
-              <Button 
-                onClick={() => reviewMutation.mutate(input)} 
-                disabled={!input.trim() || reviewMutation.isPending}
-                className="w-full"
-                data-testid="button-review"
-              >
-                {reviewMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Reviewing...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" />Review Contract</>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => reviewMutation.mutate(input)} 
+                  disabled={!input.trim() || reviewMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-review"
+                >
+                  {reviewMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Reviewing...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4 mr-2" />Review Contract</>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClear}
+                  disabled={reviewMutation.isPending || (!input && !result)}
+                  data-testid="button-clear"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+              {result && (
+                <Button
+                  variant="outline"
+                  onClick={handleExportPDF}
+                  className="w-full"
+                  data-testid="button-export-pdf"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as PDF
+                </Button>
+              )}
             </CardContent>
           </Card>
 

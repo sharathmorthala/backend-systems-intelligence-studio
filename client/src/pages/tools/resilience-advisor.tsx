@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { jsPDF } from "jspdf";
 import { 
   Shield, 
   Sparkles, 
@@ -15,7 +16,9 @@ import {
   RefreshCw,
   Key,
   Zap,
-  XCircle
+  XCircle,
+  RotateCcw,
+  Download
 } from "lucide-react";
 
 const SAMPLE_SCENARIO = `Our payment service is experiencing intermittent failures when communicating with the external payment gateway. 
@@ -72,6 +75,83 @@ export default function ResilienceAdvisor() {
     },
   });
 
+  const handleClear = () => {
+    setInput("");
+    setResult(null);
+  };
+
+  const handleExportPDF = () => {
+    if (!result) return;
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+    
+    doc.setFontSize(16);
+    doc.text("Resilience Strategy Advisor - Report", 14, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y);
+    y += 15;
+    
+    doc.setFontSize(12);
+    doc.text("Summary", 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    const summaryLines = doc.splitTextToSize(result.summary, pageWidth - 28);
+    doc.text(summaryLines, 14, y);
+    y += summaryLines.length * 5 + 10;
+    
+    doc.setFontSize(12);
+    doc.text("Retry Strategy", 14, y);
+    y += 7;
+    doc.setFontSize(9);
+    const retryLines = doc.splitTextToSize(result.retryStrategy.recommendation, pageWidth - 28);
+    doc.text(retryLines, 14, y);
+    y += retryLines.length * 4 + 2;
+    doc.text(`Max Retries: ${result.retryStrategy.maxRetries}, Backoff: ${result.retryStrategy.backoffType}, Initial Delay: ${result.retryStrategy.initialDelay}`, 14, y);
+    y += 10;
+    
+    if (y > 250) { doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.text("Idempotency", 14, y);
+    y += 7;
+    doc.setFontSize(9);
+    const idempLines = doc.splitTextToSize(result.idempotency.recommendation, pageWidth - 28);
+    doc.text(idempLines, 14, y);
+    y += idempLines.length * 4 + 2;
+    doc.text(`Key Strategy: ${result.idempotency.keyStrategy}, Storage: ${result.idempotency.storageApproach}`, 14, y);
+    y += 10;
+    
+    if (y > 250) { doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.text("Circuit Breaker", 14, y);
+    y += 7;
+    doc.setFontSize(9);
+    const cbLines = doc.splitTextToSize(result.circuitBreaker.recommendation, pageWidth - 28);
+    doc.text(cbLines, 14, y);
+    y += cbLines.length * 4 + 2;
+    doc.text(`Threshold: ${result.circuitBreaker.threshold}, Timeout: ${result.circuitBreaker.timeout}`, 14, y);
+    y += 10;
+    
+    if (result.doNotRetry.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Do Not Retry", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      result.doNotRetry.forEach((item) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const itemLines = doc.splitTextToSize(`- ${item}`, pageWidth - 28);
+        doc.text(itemLines, 14, y);
+        y += itemLines.length * 4 + 2;
+      });
+    }
+    
+    doc.save("resilience-strategy-report.pdf");
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 pb-4 border-b">
@@ -116,18 +196,39 @@ export default function ResilienceAdvisor() {
                 </Button>
               </div>
 
-              <Button 
-                onClick={() => adviseMutation.mutate(input)} 
-                disabled={!input.trim() || adviseMutation.isPending}
-                className="w-full"
-                data-testid="button-analyze"
-              >
-                {adviseMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analyzing...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" />Get Recommendations</>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => adviseMutation.mutate(input)} 
+                  disabled={!input.trim() || adviseMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-analyze"
+                >
+                  {adviseMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analyzing...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4 mr-2" />Get Recommendations</>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClear}
+                  disabled={adviseMutation.isPending || (!input && !result)}
+                  data-testid="button-clear"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+              {result && (
+                <Button
+                  variant="outline"
+                  onClick={handleExportPDF}
+                  className="w-full"
+                  data-testid="button-export-pdf"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as PDF
+                </Button>
+              )}
             </CardContent>
           </Card>
 

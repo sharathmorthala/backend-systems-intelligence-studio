@@ -6,18 +6,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { jsPDF } from "jspdf";
 import { 
   Code, 
   Sparkles, 
   Loader2, 
   FileText,
-  AlertTriangle,
   Clock,
   Lock,
   Zap,
   Bug,
   CheckCircle,
-  Info
+  Info,
+  RotateCcw,
+  Download,
+  AlertTriangle
 } from "lucide-react";
 
 const SAMPLE_CODE = `public String fetchUserData(Request request) throws IOException {
@@ -108,6 +112,75 @@ export default function CodeScanner() {
 
   const lines = input.split('\n');
 
+  const handleClear = () => {
+    setInput("");
+    setResult(null);
+  };
+
+  const handleExportPDF = () => {
+    if (!result) return;
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+    
+    doc.setFontSize(16);
+    doc.text("Backend Code Risk Scanner - Analysis Report", 14, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y);
+    y += 15;
+    
+    doc.setFontSize(12);
+    doc.text("Summary", 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    const summaryLines = doc.splitTextToSize(result.summary, pageWidth - 28);
+    doc.text(summaryLines, 14, y);
+    y += summaryLines.length * 5 + 10;
+    
+    const allRisks = [
+      ...result.blockingCalls.map(r => ({ ...r, category: "Blocking Call" })),
+      ...result.threadSafetyRisks.map(r => ({ ...r, category: "Thread Safety" })),
+      ...result.errorHandlingGaps.map(r => ({ ...r, category: "Error Handling" })),
+      ...result.performanceConcerns.map(r => ({ ...r, category: "Performance" })),
+    ];
+    
+    if (allRisks.length > 0) {
+      doc.setFontSize(12);
+      doc.text("Detected Risks", 14, y);
+      y += 7;
+      
+      allRisks.forEach((risk, i) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.text(`${i + 1}. [${risk.severity.toUpperCase()}] ${risk.category} - Line ${risk.line}`, 14, y);
+        y += 5;
+        const descLines = doc.splitTextToSize(risk.description, pageWidth - 28);
+        doc.text(descLines, 18, y);
+        y += descLines.length * 4 + 5;
+      });
+    }
+    
+    if (result.bestPractices.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      y += 5;
+      doc.setFontSize(12);
+      doc.text("Best Practices", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      result.bestPractices.forEach((practice) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const practiceLines = doc.splitTextToSize(`- ${practice}`, pageWidth - 28);
+        doc.text(practiceLines, 14, y);
+        y += practiceLines.length * 4 + 2;
+      });
+    }
+    
+    doc.save("code-risk-analysis.pdf");
+  };
+
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
       case "high": return "bg-red-500/10 text-red-600 dark:text-red-400";
@@ -131,10 +204,18 @@ export default function CodeScanner() {
           </div>
           <h1 className="text-xl font-bold" data-testid="text-tool-title">Backend Code Risk Scanner</h1>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Scan Java or Kotlin code for blocking calls, thread-safety risks, error handling gaps, and performance concerns.
-          <span className="text-yellow-600 dark:text-yellow-400 ml-1">Deterministic detection runs first; LLM explains detected risks.</span>
+        <p className="text-sm text-muted-foreground mb-3">
+          Scan Java, Kotlin, JavaScript, and Python backend code for runtime error risks, blocking calls, 
+          thread-safety issues, and error-handling gaps. Deterministic static analysis runs first. 
+          AI explains why detected risks matter—without inventing new ones.
         </p>
+        <Alert className="border-yellow-500/20 bg-yellow-500/5">
+          <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+          <AlertDescription className="text-xs text-muted-foreground ml-2">
+            This tool highlights potential risk patterns, not guaranteed failures. 
+            It complements static analysis tools—it does not replace them.
+          </AlertDescription>
+        </Alert>
       </div>
 
       <div className="flex-1 overflow-hidden p-6">
@@ -186,18 +267,39 @@ export default function CodeScanner() {
                 </Button>
               </div>
 
-              <Button 
-                onClick={() => scanMutation.mutate(input)} 
-                disabled={!input.trim() || scanMutation.isPending}
-                className="w-full"
-                data-testid="button-scan"
-              >
-                {scanMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Scanning...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" />Scan Code</>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => scanMutation.mutate(input)} 
+                  disabled={!input.trim() || scanMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-scan"
+                >
+                  {scanMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Scanning...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4 mr-2" />Scan Code</>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClear}
+                  disabled={scanMutation.isPending || (!input && !result)}
+                  data-testid="button-clear"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+              {result && (
+                <Button
+                  variant="outline"
+                  onClick={handleExportPDF}
+                  className="w-full"
+                  data-testid="button-export-pdf"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as PDF
+                </Button>
+              )}
             </CardContent>
           </Card>
 

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Code2, 
   Server, 
@@ -20,18 +21,21 @@ import {
   Github,
   Linkedin
 } from "lucide-react";
+import profilePhoto from "@/assets/profile-photo.png";
 
 const ENGINEER = {
   name: "Sharath Morthala",
   title: "Senior Backend & Platform Engineer",
   githubUrl: "https://github.com/sharathmorthala",
   linkedinUrl: "https://www.linkedin.com/in/sharath-morthala-2657a626b",
+  photo: profilePhoto,
 };
 
 interface Skill {
   name: string;
   icon: React.ComponentType<{ className?: string }>;
   description: string;
+  level: "Advanced" | "Proficient";
 }
 
 interface SkillSection {
@@ -46,21 +50,25 @@ const skillSections: SkillSection[] = [
       {
         name: "Java",
         icon: Code2,
+        level: "Advanced",
         description: "Used in production to build large-scale backend services, API layers, and platform components with emphasis on reliability, thread-safety, and maintainability."
       },
       {
         name: "Kotlin",
         icon: Code2,
+        level: "Advanced",
         description: "Applied in modern JVM backend development using coroutines for async processing, null-safety for reduced runtime errors, and idiomatic patterns for cleaner service implementations."
       },
       {
         name: "REST APIs",
         icon: Server,
+        level: "Advanced",
         description: "Designed and maintained production API contracts with focus on versioning, schema validation, backward compatibility, and consistent error handling across distributed systems."
       },
       {
         name: "Event-Driven Architecture",
         icon: Workflow,
+        level: "Proficient",
         description: "Implemented asynchronous workflows using message brokers to decouple services, improve system resilience, and enable independent scaling of components."
       }
     ]
@@ -71,21 +79,25 @@ const skillSections: SkillSection[] = [
       {
         name: "Distributed Systems",
         icon: GitBranch,
+        level: "Advanced",
         description: "Built and operated multi-service architectures handling consistency tradeoffs, partition tolerance, cross-region coordination, and data replication strategies."
       },
       {
         name: "Resilience Patterns",
         icon: Shield,
+        level: "Advanced",
         description: "Implemented circuit breakers, retries with exponential backoff, bulkheads, and graceful degradation to maintain system availability during partial failures."
       },
       {
         name: "Observability",
         icon: Eye,
+        level: "Advanced",
         description: "Established structured logging standards, designed metrics dashboards, and implemented distributed tracing to enable effective debugging and incident response."
       },
       {
         name: "Error Handling & Retries",
         icon: RotateCcw,
+        level: "Proficient",
         description: "Designed idempotent operations with configurable retry policies, jitter, and dead-letter handling for reliable message processing in production systems."
       }
     ]
@@ -96,21 +108,25 @@ const skillSections: SkillSection[] = [
       {
         name: "Kafka",
         icon: Radio,
+        level: "Proficient",
         description: "Used in production systems to implement event-driven workflows, improve service decoupling, and support scalable asynchronous processing."
       },
       {
         name: "SQL / PostgreSQL",
         icon: Database,
+        level: "Advanced",
         description: "Designed schemas, optimized complex queries, managed transaction isolation, and implemented data migration strategies for transactional backend services."
       },
       {
         name: "NoSQL",
         icon: HardDrive,
+        level: "Proficient",
         description: "Applied document stores and key-value databases for specific access patterns requiring eventual consistency, horizontal scaling, and high write throughput."
       },
       {
         name: "Caching Strategies",
         icon: Layers,
+        level: "Proficient",
         description: "Implemented multi-layer caching with appropriate invalidation policies, TTLs, and read-through patterns to reduce database load and improve response times."
       }
     ]
@@ -121,21 +137,25 @@ const skillSections: SkillSection[] = [
       {
         name: "LLM Integration",
         icon: Brain,
+        level: "Proficient",
         description: "Integrated LLM APIs into backend tooling with proper error handling, rate limiting, timeout management, and response validation for production reliability."
       },
       {
         name: "Prompt Design",
         icon: MessageSquare,
+        level: "Proficient",
         description: "Crafted system prompts and structured output guidance to translate engineering problems into effective LLM queries with predictable response formats."
       },
       {
         name: "Structured AI Outputs",
         icon: FileText,
+        level: "Advanced",
         description: "Validated LLM responses against typed schemas using Zod to ensure AI outputs integrate cleanly with typed backend systems and maintain data integrity."
       },
       {
         name: "Deterministic Fallbacks",
         icon: CheckSquare,
+        level: "Advanced",
         description: "Designed to ensure core backend behavior remains predictable when AI services or external dependencies are unavailable."
       }
     ]
@@ -162,7 +182,14 @@ function SkillCard({ skill }: { skill: Skill }) {
         className="max-w-xs p-3" 
         data-testid={`tooltip-${skill.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
       >
-        <p className="text-sm leading-relaxed">{skill.description}</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium px-2 py-0.5 rounded bg-primary/10 text-primary">
+              {skill.level}
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed">{skill.description}</p>
+        </div>
       </TooltipContent>
     </Tooltip>
   );
@@ -174,6 +201,10 @@ export default function AboutPage() {
       <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
+            <Avatar className="h-14 w-14 border-2 border-primary/20">
+              <AvatarImage src={ENGINEER.photo} alt={ENGINEER.name} />
+              <AvatarFallback className="bg-primary/10 text-primary text-lg">SM</AvatarFallback>
+            </Avatar>
             <div>
               <h1 className="text-xl font-semibold" data-testid="text-engineer-name">{ENGINEER.name}</h1>
               <p className="text-sm text-muted-foreground" data-testid="text-engineer-title">

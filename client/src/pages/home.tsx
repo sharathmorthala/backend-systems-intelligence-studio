@@ -41,7 +41,7 @@ const tools = [
   {
     id: "code-scanner",
     title: "Backend Code Risk Scanner",
-    description: "Scan Java or Kotlin code for blocking calls, thread-safety risks, error handling gaps, and performance concerns.",
+    description: "Scan Java, Kotlin, JavaScript, and Python code for runtime error risks, blocking calls, thread-safety issues, and error-handling gaps.",
     icon: Code,
     href: "/tools/code-scanner",
     color: "text-orange-500",
@@ -73,9 +73,9 @@ export default function Home() {
       <div className="p-6 pb-4">
         <h1 className="text-2xl font-bold mb-2" data-testid="text-dashboard-title">Backend Systems Intelligence Studio</h1>
         <p className="text-muted-foreground leading-relaxed max-w-3xl" data-testid="text-dashboard-subtitle">
-          Production-minded backend intelligence for reliability, APIs, and distributed systems. 
-          Select a tool below to analyze logs, review API contracts, get resilience recommendations, 
-          scan code for risks, or review system designs.
+          Production-minded backend analysis tools for engineers building reliable, scalable systems.
+          This studio combines deterministic analysis with AI-assisted reasoning to evaluate logs, APIs, 
+          code, dependencies, and system designs—without replacing engineering judgment.
         </p>
       </div>
 

@@ -1,0 +1,308 @@
+You are working on an existing web application named:
+
+Backend Systems Intelligence Studio
+
+The application is already implemented with:
+
+Dashboard
+
+Tool pages
+
+Navigation
+
+AI integrations
+
+Backend APIs
+
+Your task is NOT to rebuild the app.
+Your task is to polish, refine, and complete it to senior-engineer portfolio quality.
+
+This application must:
+
+Look self-hosted and professional
+
+Avoid vague language
+
+Avoid internal or proprietary references
+
+Demonstrate strong backend, platform, and AI-integration judgment
+
+Apply only the changes described below.
+
+1. BRANDING & IDENTITY (MANDATORY)
+1.1 Application Description
+
+Replace the current description everywhere it appears with the following exact text:
+
+Backend Systems Intelligence Studio
+Production-minded backend analysis tools for engineers building reliable, scalable systems.
+This studio combines deterministic analysis with AI-assisted reasoning to evaluate logs, APIs, code, dependencies, and system designs—without replacing engineering judgment.
+
+1.2 Logo
+
+Add a minimal professional logo:
+
+Concept: terminal prompt (>_) or abstract backend symbol
+
+Style: flat, monochrome, SVG
+
+No gradients, no mascots, no marketing flair
+
+Logo must appear:
+
+Top-left sidebar
+
+Browser favicon
+
+2. GLOBAL UX IMPROVEMENTS (ALL TOOLS)
+2.1 Clear / Reset Button
+
+For every tool page, add a Clear button that:
+
+Clears input fields
+
+Clears all analysis results
+
+Resets the tool state completely
+
+Placement:
+
+Near the primary action button (Scan / Analyze / Review)
+
+2.2 Export to PDF
+
+For every tool, add Export as PDF:
+
+PDF must include:
+
+Tool name
+
+Timestamp
+
+User input
+
+Deterministic analysis
+
+AI insights
+
+Clean formatting
+
+Constraints:
+
+Client-side PDF generation
+
+No Replit branding
+
+Print-ready
+
+3. BACKEND CODE RISK SCANNER – SCOPE & BEHAVIOR FIX
+3.1 Update Tool Description
+
+Replace existing text with:
+
+Scan Java, Kotlin, JavaScript, and Python backend code for:
+
+Runtime error risks (null/undefined access, missing fields)
+
+Blocking calls and performance hazards
+
+Thread-safety and concurrency risks (where applicable)
+
+Error-handling gaps and unsafe assumptions
+
+Deterministic static analysis runs first.
+AI explains why detected risks matter—without inventing new ones.
+
+3.2 Tool Responsibility (CRITICAL)
+
+This tool must not:
+
+Claim execution certainty
+
+Act like a compiler
+
+Invent failures
+
+This tool must:
+
+Perform rule-based static analysis
+
+Use AST-level analysis where feasible
+
+Detect risk patterns, not guaranteed bugs
+
+Explain why something is risky
+
+Add a visible disclaimer panel:
+
+This tool highlights potential risk patterns, not guaranteed failures.
+It complements static analysis tools—it does not replace them.
+
+4. REMOVE AUTH & USER UI
+
+Remove the user/avatar icon from the top-right corner
+
+No login, no authentication, no session UI
+
+Keep the header clean and minimal
+
+5. REMOVE REPLIT BRANDING
+
+Remove all visible Replit references:
+
+Bottom-left “Replit” link
+
+Any watermark or footer text
+
+The app must appear fully independent and self-hosted.
+
+6. CONTACT PAGE (NEW)
+
+Add a Contact page with:
+
+Fields
+
+Name (required)
+
+Email (required)
+
+Message / Question (required)
+
+Behavior
+
+Client-side validation
+
+Clear success confirmation
+
+Backend handling:
+
+Email delivery or secure storage
+
+No authentication required
+
+Tone:
+
+Professional
+
+Simple
+
+No marketing language
+
+7. ABOUT THE ENGINEER PAGE – FINAL POLISH
+7.1 Profile Photo
+
+Add a professional headshot:
+
+Circular or softly rounded
+
+Medium size
+
+Positioned top-center of the description card
+
+Above name and title
+
+Purpose:
+
+Build trust
+
+Humanize the portfolio
+
+7.2 About Text Layout
+
+Keep the existing content but improve:
+
+Readability
+
+Line spacing
+
+Max width
+
+Clear hierarchy:
+
+Name
+
+Title
+
+Summary
+
+Skill Map
+
+7.3 Skill Map Enhancement
+
+On hover or focus for each skill:
+
+Show tooltip with:
+
+What the skill is used for
+
+Depth level (Advanced / Proficient)
+
+Backend/platform context
+
+No internal company names or proprietary tools.
+
+8. TECHNICAL QUALITY BAR (NON-NEGOTIABLE)
+
+Ensure:
+
+Clean TypeScript types
+
+Modular components
+
+Clear separation between:
+
+Deterministic logic
+
+AI explanation layer
+
+UI
+
+No hardcoded secrets
+
+Updated README explaining:
+
+Architecture
+
+Deterministic-first design
+
+Why AI is assistive, not authoritative
+
+How this scales in real systems
+
+9. DESIGN PHILOSOPHY (DO NOT IGNORE)
+
+This application must clearly communicate:
+
+AI is an assistant, not the system of record
+
+Deterministic logic always runs first
+
+Structured outputs > free-form text
+
+Engineering judgment is preserved
+
+This should be obvious from:
+
+UI copy
+
+Tool behavior
+
+Documentation
+
+FINAL GOAL
+
+The finished product must confidently answer:
+
+“Why did you build this?”
+
+Answer implicitly through the product:
+
+Production-grade thinking
+
+Reliability awareness
+
+Responsible AI usage
+
+Senior backend/platform engineering mindset
+
+END OF INSTRUCTIONS

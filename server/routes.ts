@@ -221,6 +221,26 @@ export async function registerRoutes(
     })
   );
 
+  // Contact form endpoint
+  app.post(
+    "/api/contact",
+    asyncHandler(async (req, res) => {
+      console.log("[API] Contact form submission received");
+      const { name, email, message } = req.body;
+      
+      if (!name || !email || !message) {
+        res.status(400).json({ error: "Name, email, and message are required" });
+        return;
+      }
+
+      // Store the contact message (in production, you'd email or persist this)
+      console.log(`[Contact] From: ${name} <${email}>`);
+      console.log(`[Contact] Message: ${message}`);
+      
+      res.json({ success: true, message: "Message received successfully" });
+    })
+  );
+
   // Global error handler
   app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error("[API] Unhandled error:", err);

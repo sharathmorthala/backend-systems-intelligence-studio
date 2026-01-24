@@ -12,7 +12,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { 
-  Terminal, 
   LayoutDashboard, 
   FileSearch, 
   FileCode, 
@@ -21,9 +20,9 @@ import {
   Network,
   Settings,
   User,
-  Github, 
-  ExternalLink,
-  Package
+  Github,
+  Package,
+  Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -75,6 +74,11 @@ const settingsNavItems = [
     icon: User,
   },
   {
+    title: "Contact",
+    url: "/contact",
+    icon: Mail,
+  },
+  {
     title: "Settings",
     url: "/settings",
     icon: Settings,
@@ -88,17 +92,16 @@ export function AppSidebar() {
     <Sidebar className="border-r-0">
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/20">
-            <Terminal className="h-6 w-6 text-primary" />
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 border border-primary/20">
+            <span className="font-mono text-lg font-bold text-primary">&gt;_</span>
           </div>
           <div>
             <h1 className="text-base font-bold text-sidebar-foreground leading-tight">Backend Systems</h1>
-            <h2 className="text-base font-bold text-sidebar-foreground leading-tight">Intelligence</h2>
-            <h3 className="text-base font-bold text-sidebar-foreground leading-tight">Studio</h3>
+            <h2 className="text-base font-bold text-sidebar-foreground leading-tight">Intelligence Studio</h2>
           </div>
         </div>
         <p className="text-xs text-sidebar-foreground/70 leading-relaxed">
-          Production-minded backend intelligence for reliability, APIs, and distributed systems.
+          Production-minded backend analysis tools for engineers building reliable, scalable systems.
         </p>
       </SidebarHeader>
 
@@ -173,35 +176,25 @@ export function AppSidebar() {
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         <div className="space-y-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground"
-            data-testid="button-github-view"
+          <a
+            href="https://github.com/sharathmorthala"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full"
           >
-            <Github className="h-4 w-4 mr-2" />
-            View on GitHub
-          </Button>
-          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant="ghost"
               size="sm"
-              className="flex-1 justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground"
-              data-testid="button-replit"
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Replit
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground"
-              data-testid="button-github"
+              className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground"
+              data-testid="button-github-view"
             >
               <Github className="h-4 w-4 mr-2" />
-              GitHub
+              View on GitHub
             </Button>
-          </div>
+          </a>
+          <p className="text-xs text-sidebar-foreground/50 text-center">
+            Built by Sharath Morthala
+          </p>
         </div>
       </SidebarFooter>
     </Sidebar>

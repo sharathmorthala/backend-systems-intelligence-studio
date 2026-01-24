@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { jsPDF } from "jspdf";
 import { 
   Package, 
   Sparkles, 
@@ -15,7 +16,9 @@ import {
   ShieldAlert,
   ShieldCheck,
   ArrowUpCircle,
-  AlertCircle
+  AlertCircle,
+  RotateCcw,
+  Download
 } from "lucide-react";
 
 const SAMPLE_PACKAGE_JSON = `{
@@ -117,6 +120,85 @@ export default function DependencyAnalyzer() {
     }
   };
 
+  const handleClear = () => {
+    setInput("");
+    setResult(null);
+  };
+
+  const handleExportPDF = () => {
+    if (!result) return;
+    
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+    
+    doc.setFontSize(16);
+    doc.text("Dependency Risk & Vulnerability Analyzer - Report", 14, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y);
+    y += 15;
+    
+    doc.setFontSize(12);
+    doc.text("Summary", 14, y);
+    y += 7;
+    doc.setFontSize(10);
+    const summaryLines = doc.splitTextToSize(result.summary, pageWidth - 28);
+    doc.text(summaryLines, 14, y);
+    y += summaryLines.length * 5 + 10;
+    
+    if (result.detectedRisks.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Detected Risks", 14, y);
+      y += 7;
+      result.detectedRisks.forEach((risk, i) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.text(`${i + 1}. [${risk.severity.toUpperCase()}]`, 14, y);
+        y += 5;
+        const issueLines = doc.splitTextToSize(risk.issue, pageWidth - 28);
+        doc.text(issueLines, 18, y);
+        y += issueLines.length * 4 + 5;
+      });
+    }
+    
+    if (result.dependencies.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Dependencies Analysis", 14, y);
+      y += 7;
+      result.dependencies.forEach((dep, i) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.text(`${i + 1}. ${dep.name} (${dep.version}) - Risk: ${dep.riskLevel}`, 14, y);
+        y += 5;
+        if (dep.reason) {
+          const reasonLines = doc.splitTextToSize(dep.reason, pageWidth - 28);
+          doc.text(reasonLines, 18, y);
+          y += reasonLines.length * 4 + 3;
+        }
+      });
+    }
+    
+    if (result.recommendations.length > 0) {
+      if (y > 250) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text("Recommendations", 14, y);
+      y += 7;
+      doc.setFontSize(9);
+      result.recommendations.forEach((rec, i) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const recLines = doc.splitTextToSize(`${i + 1}. ${rec}`, pageWidth - 28);
+        doc.text(recLines, 14, y);
+        y += recLines.length * 4 + 2;
+      });
+    }
+    
+    doc.save("dependency-analysis-report.pdf");
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 pb-4 border-b">
@@ -174,18 +256,39 @@ export default function DependencyAnalyzer() {
                 </Button>
               </div>
 
-              <Button 
-                onClick={() => analyzeMutation.mutate(input)} 
-                disabled={!input.trim() || analyzeMutation.isPending}
-                className="w-full"
-                data-testid="button-analyze"
-              >
-                {analyzeMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analyzing...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4 mr-2" />Analyze Dependencies</>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => analyzeMutation.mutate(input)} 
+                  disabled={!input.trim() || analyzeMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-analyze"
+                >
+                  {analyzeMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Analyzing...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4 mr-2" />Analyze Dependencies</>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClear}
+                  disabled={analyzeMutation.isPending || (!input && !result)}
+                  data-testid="button-clear"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+              {result && (
+                <Button
+                  variant="outline"
+                  onClick={handleExportPDF}
+                  className="w-full"
+                  data-testid="button-export-pdf"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as PDF
+                </Button>
+              )}
             </CardContent>
           </Card>
 

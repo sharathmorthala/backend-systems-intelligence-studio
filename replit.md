@@ -68,7 +68,7 @@ Preferred communication style: Simple, everyday language.
   - Right: LLM insights
 - **Settings** (`client/src/pages/settings.tsx`): API key status and system configuration
 - **About** (`client/src/pages/about.tsx`): Engineer profile with circular photo, skill map with level badges, and tooltips
-- **Contact** (`client/src/pages/contact.tsx`): Contact form with client-side validation
+- **Contact** (`client/src/pages/contact.tsx`): Contact form with client-side validation and email delivery via Resend
 
 ### Backend Architecture
 - **Framework**: Express.js 5 with TypeScript running on Node.js
@@ -80,6 +80,7 @@ Preferred communication style: Simple, everyday language.
 - **Log Parser** (`server/log-parser.ts`): Parses multiple log formats, extracts levels/sources/messages, groups errors
 - **LLM Service** (`server/llm-service.ts`): Hugging Face API integration for log analysis
 - **Tool Services** (`server/tool-services.ts`): LLM integration for all 5 tools with deterministic fallbacks
+- **Email Service** (`server/email-service.ts`): Resend integration for contact form email notifications
 - **Storage** (`server/storage.ts`): In-memory storage for analysis results
 
 ### API Endpoints
@@ -105,6 +106,12 @@ Preferred communication style: Simple, everyday language.
 - **Hugging Face Inference API**: Primary LLM provider using Mixtral-8x7B-Instruct-v0.1 model
 - Requires `HUGGINGFACE_API_KEY` environment variable
 - Deterministic fallback analysis implemented for all tools when LLM is unavailable
+
+### Email Integration
+- **Resend**: Email delivery for contact form notifications
+- Uses Replit connector for secure API key management
+- Sends to configured recipient (CONTACT_EMAIL env var or default)
+- HTML escaping for security, Zod validation for input
 
 ### Database
 - **PostgreSQL**: Configured via Drizzle ORM (schema ready in `shared/schema.ts`)

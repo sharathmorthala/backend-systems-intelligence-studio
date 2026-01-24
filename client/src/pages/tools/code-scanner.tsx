@@ -218,10 +218,10 @@ export default function CodeScanner() {
         </Alert>
       </div>
 
-      <div className="flex-1 overflow-hidden p-6">
-        <div className="grid gap-4 lg:grid-cols-3 h-full">
+      <div className="flex-1 overflow-auto p-6">
+        <div className="grid gap-4 lg:grid-cols-3 lg:h-full">
           {/* Left: Input */}
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-[400px] lg:min-h-0">
             <CardHeader className="pb-3 space-y-0">
               <CardTitle className="text-base">Code Input</CardTitle>
             </CardHeader>
@@ -304,7 +304,7 @@ export default function CodeScanner() {
           </Card>
 
           {/* Center: Risk Categories + Best Practices */}
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-[350px] lg:min-h-0">
             <CardHeader className="pb-3 space-y-0">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-base">Risk Detection</CardTitle>
@@ -444,7 +444,7 @@ export default function CodeScanner() {
           </Card>
 
           {/* Right: Summary + LLM Insights */}
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-[350px] lg:min-h-0">
             <CardHeader className="pb-3 space-y-0">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-base">Analysis Insights</CardTitle>

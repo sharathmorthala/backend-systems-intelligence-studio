@@ -176,10 +176,10 @@ export default function ApiReviewer() {
         </p>
       </div>
 
-      <div className="flex-1 overflow-hidden p-6">
-        <div className="grid gap-4 lg:grid-cols-3 h-full">
+      <div className="flex-1 overflow-auto p-6">
+        <div className="grid gap-4 lg:grid-cols-3 lg:h-full">
           {/* Left: Input */}
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-[400px] lg:min-h-0">
             <CardHeader className="pb-3 space-y-0">
               <CardTitle className="text-base">API Contract Input</CardTitle>
             </CardHeader>
@@ -252,7 +252,7 @@ export default function ApiReviewer() {
           </Card>
 
           {/* Center: Structured Analysis */}
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-[350px] lg:min-h-0">
             <CardHeader className="pb-3 space-y-0">
               <CardTitle className="text-base">Contract Analysis</CardTitle>
             </CardHeader>
@@ -311,7 +311,7 @@ export default function ApiReviewer() {
           </Card>
 
           {/* Right: LLM Insights */}
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-[350px] lg:min-h-0">
             <CardHeader className="pb-3 space-y-0">
               <CardTitle className="text-base">Best Practices</CardTitle>
             </CardHeader>

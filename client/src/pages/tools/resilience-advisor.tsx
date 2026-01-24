@@ -166,10 +166,10 @@ export default function ResilienceAdvisor() {
         </p>
       </div>
 
-      <div className="flex-1 overflow-hidden p-6">
-        <div className="grid gap-4 lg:grid-cols-3 h-full">
+      <div className="flex-1 overflow-auto p-6">
+        <div className="grid gap-4 lg:grid-cols-3 lg:h-full">
           {/* Left: Input */}
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-[400px] lg:min-h-0">
             <CardHeader className="pb-3 space-y-0">
               <CardTitle className="text-base">Failure Scenario</CardTitle>
             </CardHeader>
@@ -233,7 +233,7 @@ export default function ResilienceAdvisor() {
           </Card>
 
           {/* Center: Structured Analysis */}
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-[350px] lg:min-h-0">
             <CardHeader className="pb-3 space-y-0">
               <CardTitle className="text-base">Resilience Patterns</CardTitle>
             </CardHeader>
@@ -289,7 +289,7 @@ export default function ResilienceAdvisor() {
           </Card>
 
           {/* Right: LLM Insights */}
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-[350px] lg:min-h-0">
             <CardHeader className="pb-3 space-y-0">
               <CardTitle className="text-base">What NOT to Retry</CardTitle>
             </CardHeader>

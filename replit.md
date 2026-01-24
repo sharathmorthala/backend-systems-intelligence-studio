@@ -38,6 +38,12 @@ The application demonstrates:
 - **Analysis**: Identifies architectural concerns
 - **Output**: Bottlenecks, single points of failure, scalability concerns, observability gaps
 
+### 6. Dependency Risk & Vulnerability Analyzer
+- **Input**: Dependency manifests (pom.xml, package.json, build.gradle)
+- **Analysis**: Detects known vulnerable libraries, unpinned versions, supply-chain risks
+- **Output**: Risk list with severity, per-dependency breakdown, actionable recommendations
+- **Disclaimer**: "This analyzer highlights dependency risk patterns and known indicators. It is not a replacement for enterprise vulnerability scanners or continuous security tooling."
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -80,6 +86,7 @@ Preferred communication style: Simple, everyday language.
 - `POST /api/tools/resilience-advice` - Resilience Strategy Advisor
 - `POST /api/tools/code-scan` - Backend Code Risk Scanner
 - `POST /api/tools/system-review` - System Design Reviewer
+- `POST /api/tools/dependency-analyze` - Dependency Risk & Vulnerability Analyzer
 - `GET /api/health` - Health check with API key status
 
 ### Data Flow
@@ -122,8 +129,9 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### Backend Systems Intelligence Studio (Latest)
-- Created main dashboard with 5 clickable tool tiles
-- Built 5 specialized tool pages with consistent three-column layout
+- Added Dependency Risk & Vulnerability Analyzer (6th tool)
+- Created main dashboard with 6 clickable tool tiles
+- Built 6 specialized tool pages with consistent three-column layout
 - Implemented backend API endpoints for all tools
 - Added shared LLM client with tool-specific prompts in tool-services.ts
 - Implemented deterministic fallback analysis for all tools

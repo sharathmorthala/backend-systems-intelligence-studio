@@ -10,6 +10,7 @@ import {
   reviewSystemDesign,
   analyzeDependencies
 } from "./tool-services";
+import { sendContactEmail } from "./email-service";
 import { analyzeLogsRequestSchema, type AnalyzeLogsResponse } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { fromZodError } from "zod-validation-error";
@@ -221,7 +222,7 @@ export async function registerRoutes(
     })
   );
 
-  // Contact form endpoint
+  // Contact form endpoint with email notification
   app.post(
     "/api/contact",
     asyncHandler(async (req, res) => {
@@ -233,11 +234,24 @@ export async function registerRoutes(
         return;
       }
 
-      // Store the contact message (in production, you'd email or persist this)
       console.log(`[Contact] From: ${name} <${email}>`);
       console.log(`[Contact] Message: ${message}`);
       
-      res.json({ success: true, message: "Message received successfully" });
+      // Send email notification via Resend
+      const emailResult = await sendContactEmail({ name, email, message });
+      
+      if (!emailResult.success) {
+        console.error("[Contact] Email failed:", emailResult.error);
+        res.status(500).json({ 
+          success: false, 
+          message: "Message received but email notification failed",
+          error: emailResult.error 
+        });
+        return;
+      }
+      
+      console.log("[Contact] Email sent successfully");
+      res.json({ success: true, message: "Message sent successfully" });
     })
   );
 

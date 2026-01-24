@@ -281,7 +281,9 @@ function generateResilienceFallback(scenario: string): ResilienceResult {
   };
 }
 
-// Code Risk Scanner
+// Code Risk Scanner - AST-based multi-language analysis
+import { analyzeCode, convertToUIFormat, detectLanguage, RiskFinding } from "./ast-analyzer";
+
 export interface CodeRisk {
   line: number;
   type: string;
@@ -298,6 +300,8 @@ export interface CodeScanResult {
   summary: string;
   llmInsights: string | null;
   usedFallback: boolean;
+  language: string;
+  parserUsed: string;
 }
 
 // Deterministic risk detection - runs BEFORE LLM
@@ -560,48 +564,76 @@ function generateBestPractices(risks: {
 }
 
 export async function scanCode(code: string): Promise<CodeScanResult> {
-  const lines = code.split('\n');
+  // STEP 1: AST-based deterministic analysis (ALWAYS runs first)
+  const analysisResult = analyzeCode(code);
+  const uiFormat = convertToUIFormat(analysisResult);
   
-  // STEP 1: Deterministic risk detection (ALWAYS runs first)
-  const deterministicRisks = detectCodeRisksDeterministic(code);
-  const bestPractices = generateBestPractices(deterministicRisks);
+  // Also run legacy Java/Kotlin detection for backward compatibility
+  const legacyRisks = detectCodeRisksDeterministic(code);
   
-  const totalIssues = 
-    deterministicRisks.blockingCalls.length + 
-    deterministicRisks.threadSafetyRisks.length + 
-    deterministicRisks.errorHandlingGaps.length + 
-    deterministicRisks.performanceConcerns.length;
+  // Merge AST findings with legacy findings (deduplicate by line+type)
+  const seenKeys = new Set<string>();
   
-  const highCount = [
-    ...deterministicRisks.blockingCalls,
-    ...deterministicRisks.threadSafetyRisks,
-    ...deterministicRisks.errorHandlingGaps,
-    ...deterministicRisks.performanceConcerns
-  ].filter(r => r.severity === "high").length;
+  const mergeRisks = (astRisks: CodeRisk[], legacyRisks: CodeRisk[]): CodeRisk[] => {
+    const result: CodeRisk[] = [];
+    for (const risk of astRisks) {
+      const key = `${risk.line}-${risk.type}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        result.push(risk);
+      }
+    }
+    for (const risk of legacyRisks) {
+      const key = `${risk.line}-${risk.type}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        result.push(risk);
+      }
+    }
+    return result;
+  };
   
-  const mediumCount = [
-    ...deterministicRisks.blockingCalls,
-    ...deterministicRisks.threadSafetyRisks,
-    ...deterministicRisks.errorHandlingGaps,
-    ...deterministicRisks.performanceConcerns
-  ].filter(r => r.severity === "medium").length;
+  const blockingCalls = mergeRisks(uiFormat.blockingCalls, legacyRisks.blockingCalls);
+  const threadSafetyRisks = mergeRisks(uiFormat.threadSafetyRisks, legacyRisks.threadSafetyRisks);
+  const errorHandlingGaps = mergeRisks(uiFormat.errorHandlingGaps, legacyRisks.errorHandlingGaps);
+  const performanceConcerns = mergeRisks(uiFormat.performanceConcerns, legacyRisks.performanceConcerns);
   
-  const summary = totalIssues > 0
-    ? `Scanned ${lines.length} lines of code. Found ${totalIssues} risks: ${highCount} high, ${mediumCount} medium, ${totalIssues - highCount - mediumCount} low severity.`
-    : `Scanned ${lines.length} lines of code. No risks detected by current ruleset. This does not guarantee correctness.`;
+  // Merge best practices
+  const bestPracticesSet = new Set([
+    ...uiFormat.bestPractices,
+    ...generateBestPractices(legacyRisks),
+  ]);
+  const bestPractices = Array.from(bestPracticesSet);
+  
+  const totalIssues = blockingCalls.length + threadSafetyRisks.length + 
+                      errorHandlingGaps.length + performanceConcerns.length;
+  
+  const allRisks = [...blockingCalls, ...threadSafetyRisks, ...errorHandlingGaps, ...performanceConcerns];
+  const highCount = allRisks.filter(r => r.severity === "high").length;
+  const mediumCount = allRisks.filter(r => r.severity === "medium").length;
+  const lowCount = allRisks.filter(r => r.severity === "low").length;
+  
+  // Build summary with language and parser info
+  let summary = `Scanned ${analysisResult.linesScanned} lines of ${analysisResult.language} code using ${analysisResult.parserUsed}. `;
+  if (totalIssues > 0) {
+    summary += `Found ${totalIssues} risks: ${highCount} high, ${mediumCount} medium, ${lowCount} low severity.`;
+  } else {
+    summary += "No risks detected by current ruleset. This does not guarantee correctness.";
+  }
+  
+  if (analysisResult.limitations.length > 0) {
+    summary += " " + analysisResult.limitations[0];
+  }
 
   // STEP 2: LLM for explanations ONLY (not for detection)
   let llmInsights: string | null = null;
   
-  if (totalIssues > 0) {
-    const riskSummary = [
-      ...deterministicRisks.blockingCalls.map(r => `- Line ${r.line}: ${r.type} - ${r.description}`),
-      ...deterministicRisks.threadSafetyRisks.map(r => `- Line ${r.line}: ${r.type} - ${r.description}`),
-      ...deterministicRisks.errorHandlingGaps.map(r => `- Line ${r.line}: ${r.type} - ${r.description}`),
-      ...deterministicRisks.performanceConcerns.map(r => `- Line ${r.line}: ${r.type} - ${r.description}`),
-    ].join('\n');
+  if (totalIssues > 0 && analysisResult.findings.length > 0) {
+    const riskSummary = analysisResult.findings
+      .map(f => `- Line ${f.line} [${f.severity}]: ${f.message}`)
+      .join('\n');
     
-    const prompt = `<s>[INST] You are a senior backend engineer. The following risks were detected in Java/Kotlin code through static analysis:
+    const prompt = `<s>[INST] You are a senior backend engineer. The following risks were detected in ${analysisResult.language} code through static analysis:
 
 ${riskSummary}
 
@@ -616,11 +648,16 @@ Respond in plain text, not JSON. Keep it concise (2-3 sentences per risk). [/INS
   }
 
   return {
-    ...deterministicRisks,
+    blockingCalls,
+    threadSafetyRisks,
+    errorHandlingGaps,
+    performanceConcerns,
     bestPractices,
     summary,
     llmInsights,
-    usedFallback: llmInsights === null
+    usedFallback: llmInsights === null,
+    language: analysisResult.language,
+    parserUsed: analysisResult.parserUsed,
   };
 }
 

@@ -73,6 +73,8 @@ interface ScanResult {
   summary: string;
   llmInsights: string | null;
   usedFallback: boolean;
+  language?: string;
+  parserUsed?: string;
 }
 
 export default function CodeScanner() {

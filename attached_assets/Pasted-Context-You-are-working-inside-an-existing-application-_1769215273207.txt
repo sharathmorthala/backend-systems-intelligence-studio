@@ -1,0 +1,242 @@
+Context
+
+You are working inside an existing application called Backend Systems Intelligence Studio.
+
+⚠️ The UI, routing, dashboard, and tool pages are already implemented.
+You must NOT change UI layout, navigation, or visual components.
+
+Your task is to upgrade the Backend Code Risk Scanner engine only.
+
+Objective
+
+Upgrade the Backend Code Risk Scanner from simple pattern-based checks to a deterministic, AST-based static analysis engine supporting:
+
+JavaScript
+
+Java
+
+Kotlin
+
+Python
+
+The scanner must detect structural and semantic backend risks using AST analysis without executing code.
+
+Core Principles (MANDATORY)
+
+No code execution or sandboxing
+
+No runtime simulation
+
+Deterministic detection FIRST
+
+LLM (Hugging Face) is used ONLY to explain detected risks
+
+LLM must never invent findings
+
+If AST analysis is incomplete, explicitly state limitations
+
+Scanner must work fully even if LLM is unavailable
+
+Existing UI Contract (DO NOT CHANGE)
+
+The UI already expects:
+
+A list of detected risks
+
+Severity levels
+
+Line numbers (if available)
+
+A summary section
+
+An explanation / recommendation section
+
+You must only populate existing response fields.
+
+Architecture to Implement (Backend Only)
+Source Code Input
+ → Language Detection
+ → Language-specific AST Parser
+ → AST Normalization
+ → Deterministic Rule Engine
+ → Structured Risk Findings
+ → Optional LLM Explanation
+
+Language Parsers (Use One Per Language)
+Language	Parser
+JavaScript	@babel/parser
+Java	tree-sitter-java OR java-parser
+Kotlin	tree-sitter-kotlin
+Python	Python built-in ast OR tree-sitter-python
+AST Normalization Layer (REQUIRED)
+
+Normalize all language ASTs into this internal structure:
+
+interface NormalizedNode {
+  type: string
+  name?: string
+  children?: NormalizedNode[]
+  location?: {
+    line: number
+    column: number
+  }
+  metadata?: Record<string, any>
+}
+
+
+This enables language-agnostic rule evaluation.
+
+Deterministic Rule Engine
+
+Implement a rule engine with pluggable rules:
+
+interface RiskRule {
+  id: string
+  severity: "LOW" | "MEDIUM" | "HIGH"
+  languages: ("js" | "java" | "kotlin" | "python")[]
+  match(node: NormalizedNode, context: AnalysisContext): boolean
+  buildFinding(node: NormalizedNode): RiskFinding
+}
+
+REQUIRED RULES (Phase 1 – MUST IMPLEMENT)
+JavaScript
+
+Unsafe property access (obj.a.b)
+
+Undeclared variable usage
+
+Blocking calls in event loop context
+
+Java
+
+Blocking I/O calls in request-handling methods
+
+Empty catch blocks
+
+Thread.sleep in server code
+
+Kotlin
+
+Blocking calls inside coroutines
+
+runBlocking misuse
+
+Thread.sleep inside suspend functions
+
+Python
+
+Broad exception catch (except Exception)
+
+Bare except
+
+Blocking calls inside async functions
+
+Output Format (MATCH EXISTING UI)
+
+Each detected issue must include:
+
+{
+  "ruleId": "JS_UNSAFE_PROPERTY_ACCESS",
+  "severity": "HIGH",
+  "message": "Unsafe property access on possibly undefined object",
+  "line": 12,
+  "whyItMatters": "May cause runtime failure under production conditions",
+  "suggestedFix": "Use optional chaining or validate object existence"
+}
+
+LLM Integration (STRICT)
+
+After deterministic detection:
+
+Pass detected findings to Hugging Face LLM
+
+Ask it ONLY to:
+
+Explain impact
+
+Suggest mitigation
+
+LLM must NOT:
+
+Detect new issues
+
+Modify severity
+
+Add speculative findings
+
+Fallback Behavior
+
+If LLM is unavailable:
+
+Still return deterministic findings
+
+Add message:
+
+“AI explanations unavailable. Static analysis completed successfully.”
+
+Zero-Risk Case Handling
+
+If no rules match:
+
+Return:
+
+“No risks detected by current ruleset. This does not guarantee correctness.”
+
+Validation Test (MUST PASS)
+
+The following code must produce multiple findings:
+
+function process(input) {
+  if (input) {
+    console.log(data);
+  }
+  const user = { profile: { name: "Alex" } };
+  console.log(user.settings.id);
+}
+
+
+Expected:
+
+Undeclared variable usage
+
+Unsafe property access
+
+Constraints
+
+❌ Do NOT change UI
+
+❌ Do NOT add new tools
+
+❌ Do NOT execute code
+
+❌ Do NOT claim compiler-level accuracy
+
+✅ Be explicit about limitations
+
+✅ Favor correctness over coverage
+
+End Goal
+
+This scanner should demonstrate:
+
+AST-based static analysis fundamentals
+
+Multi-language backend reasoning
+
+Secure, deterministic engineering
+
+Responsible AI integration
+
+Senior platform engineering judgment
+
+✅ IMPORTANT FINAL NOTE
+
+This tool is intentionally scoped to:
+
+Structural correctness
+
+Reliability risks
+
+Backend engineering concerns
+
+It is not a linter, compiler, or runtime debugger.

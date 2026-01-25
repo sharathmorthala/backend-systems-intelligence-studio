@@ -170,7 +170,7 @@ The LLM provides suggestions and explanations, but the system doesn't blindly tr
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/backend-systems-intelligence-studio.git
+git clone https://github.com/sharathchandr68/backend-systems-intelligence-studio.git
 cd backend-systems-intelligence-studio
 
 # Install dependencies
@@ -316,8 +316,8 @@ MIT License — See [LICENSE](LICENSE) for details.
 **Sharath Morthala**  
 Backend & Platform Engineer
 
-- GitHub: [github.com/yourusername](https://github.com/yourusername)
-- LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
+- GitHub: [github.com/sharathchandr68](https://github.com/sharathchandr68)
+- LinkedIn: [linkedin.com/in/sharath-morthala](https://linkedin.com/in/sharath-morthala)
 
 ---
 

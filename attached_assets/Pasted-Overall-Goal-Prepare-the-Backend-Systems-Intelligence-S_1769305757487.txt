@@ -1,0 +1,273 @@
+Overall Goal
+
+Prepare the Backend Systems Intelligence Studio as a production-quality, open-source–ready repository that can be cloned, run locally, and reviewed by senior engineers.
+The result must be suitable for a public GitHub repository linked from LinkedIn.
+
+PHASE 1 — Code Quality & Structure
+1. Codebase Cleanup
+
+Review all frontend and backend code
+
+Ensure:
+
+Clear separation of concerns
+
+No unused files, dead code, or commented leftovers
+
+Consistent naming conventions
+
+No hardcoded secrets
+
+Follow industry standards:
+
+Frontend: modular components, hooks/util separation
+
+Backend: service layers, clear API boundaries
+
+Config isolated from logic
+
+2. Folder & Project Structure
+
+Refactor into a clean, understandable layout, for example:
+
+/src
+  /components
+  /pages
+  /tools
+  /services
+  /utils
+  /hooks
+  /styles
+  /types
+  /config
+/backend (if applicable)
+  /routes
+  /services
+  /analysis
+  /llm
+/public
+/docs
+
+
+Every folder must have a clear purpose
+
+Avoid “misc” or catch-all folders
+
+Group tools logically (log analyzer, code scanner, dependency analyzer, etc.)
+
+3. Coding Standards
+
+Apply consistent standards:
+
+Formatting (Prettier / ESLint-style consistency)
+
+Explicit typing where applicable
+
+Defensive programming
+
+Clear error handling
+
+Comments only where they add clarity (no noise)
+
+PHASE 2 — Documentation (README & Docs)
+4. Create a High-Quality README.md
+
+Write a professional, senior-level README that includes:
+
+Sections Required
+
+Project Overview
+
+What is Backend Systems Intelligence Studio
+
+Why it exists
+
+Who it is for (backend & platform engineers)
+
+Design Philosophy
+
+Deterministic analysis first
+
+LLMs as assistants, not source of truth
+
+Production-minded tooling
+
+Features / Tools
+
+Log & Incident Analyzer
+
+API Contract Reviewer
+
+Backend Code Risk Scanner
+
+Dependency Risk Analyzer
+
+System Design Reviewer
+
+Resilience Strategy Advisor
+
+Architecture Overview
+
+Frontend vs backend responsibilities
+
+How LLM integration works
+
+Fallback mechanisms
+
+Tech Stack
+
+Frontend framework
+
+Backend runtime
+
+LLM provider (Hugging Face)
+
+Tooling and libraries
+
+Local Setup
+
+Prerequisites
+
+Environment variables
+
+Install steps
+
+Run steps
+
+Configuration
+
+How to set Hugging Face API key
+
+Optional configuration flags
+
+Production Notes
+
+What this is not (not automated code review, not CI replacement)
+
+How it could scale
+
+License
+
+MIT (or appropriate open license)
+
+5. Add /docs Folder
+
+Create additional documentation pages:
+
+Tool-by-tool explanations
+
+How deterministic analysis works
+
+Known limitations
+
+Future roadmap
+
+PHASE 3 — GitHub Readiness
+6. Git Ignore & Environment Safety
+
+Add a proper .gitignore
+
+Ensure:
+
+.env files are excluded
+
+Secrets are never committed
+
+Provide .env.example
+
+7. Commit History (Best Effort)
+
+If possible within Replit constraints:
+
+Convert major checkpoints into logical commits, such as:
+
+Initial dashboard & layout
+
+Tool routing and navigation
+
+Log analyzer implementation
+
+Code risk scanner
+
+Dependency analyzer
+
+About the Engineer page
+
+UX polish & responsiveness
+
+Documentation and cleanup
+
+Use clear commit messages, e.g.:
+
+feat: add backend code risk scanner
+
+chore: clean up project structure
+
+docs: add production-grade README
+
+If full commit history recreation is not possible, document the intended commit breakdown in the README.
+
+PHASE 4 — Final Checks
+8. Run & Verify
+
+Ensure the app:
+
+Runs locally without Replit
+
+Builds cleanly
+
+Has no console errors
+
+Verify responsive behavior (desktop + mobile)
+
+9. Final Output
+
+At the end:
+
+Confirm the project is ready to push to GitHub
+
+Confirm it can be cloned and run by anyone
+
+Ensure it reflects senior backend & platform engineering standards
+
+Important Constraints
+
+Do NOT add new features
+
+Do NOT change branding or product name
+
+This is a polish, packaging, and professionalism task
+
+Final Instruction
+
+Treat this as a real-world open-source engineering project, not a demo.
+
+Critical Safety Constraint
+
+Before making any changes:
+
+Identify all existing user-visible behaviors
+
+Confirm all routes, tools, interactions, and flows that currently work
+
+During refactoring:
+
+Do NOT change functionality, UI behavior, routing, or outputs
+
+Do NOT remove or rewrite working logic
+
+Only reorganize, rename, or clean code where behavior remains identical
+
+After changes:
+
+Verify that the application behaves exactly the same as before
+
+All tools must work as-is
+
+All navigation, redirects, and interactions must remain unchanged
+
+If a proposed improvement risks changing behavior:
+
+Skip it
+
+Prefer minimal, safe refactoring over aggressive optimization

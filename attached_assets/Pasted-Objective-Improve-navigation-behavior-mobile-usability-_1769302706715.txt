@@ -1,0 +1,119 @@
+Objective
+
+Improve navigation behavior, mobile usability, and UI consistency across the Backend Systems Intelligence Studio without changing existing layouts, routes, or visual identity.
+
+Changes Required
+1️⃣ Sidebar (Left Panel) Auto-Close Behavior
+Current Issue
+
+When a user clicks a tool (e.g., Log & Incident Analyzer, About the Engineer), the sidebar stays open.
+
+The user must manually click outside to close it.
+
+Required Behavior
+
+When any sidebar item is clicked (tool pages, About the Engineer, Contact, etc.):
+
+Automatically close the sidebar
+
+Navigate to the selected page
+
+The sidebar should only open when:
+
+The user explicitly clicks the Dashboard / Menu button at the top
+
+Implementation Notes
+
+Treat the sidebar like a drawer
+
+This should apply to:
+
+Desktop
+
+Tablet
+
+Mobile
+
+Do not break routing or cause page reloads
+
+2️⃣ Replace Top Dashboard Toggle Icon
+Current
+
+A square / abstract icon is used to open the sidebar
+
+Change Required
+
+Replace it with a classic hamburger menu icon:
+
+☰ (three horizontal lines)
+
+This icon should:
+
+Clearly indicate “menu / options”
+
+Toggle the sidebar open/close
+
+Constraints
+
+Keep placement the same
+
+Do not change button size or header layout
+
+Maintain accessibility (keyboard + screen readers if present)
+
+3️⃣ Fix Skill Interaction on Mobile (About the Engineer Page)
+Current Issue
+
+Skill descriptions are shown on hover
+
+Hover does not work on mobile/touch devices
+
+Tapping skills does nothing on phones
+
+Required Behavior
+
+Desktop / Laptop
+
+Keep existing hover behavior
+
+Mobile / Touch Devices
+
+Change interaction to on-click / on-tap
+
+When a skill is tapped:
+
+Show the description in a popover / modal / expandable card
+
+The content must be clearly readable
+
+Tapping outside or a close button should dismiss it
+
+Important
+
+Do not remove hover behavior on desktop
+
+Use responsive detection (pointer type, screen size, or touch support)
+
+Ensure it feels intentional, not hacked
+
+UX Expectations
+
+Smooth transitions (no flicker)
+
+No breaking of existing styles
+
+Consistent behavior across tools
+
+Professional, production-quality UX
+
+Acceptance Criteria
+
+Sidebar closes automatically after navigation
+
+Sidebar opens only via the hamburger menu
+
+Hamburger menu replaces the square icon
+
+Skill descriptions are accessible on mobile via tap
+
+Desktop hover behavior remains unchanged

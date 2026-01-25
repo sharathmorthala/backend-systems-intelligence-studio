@@ -10,6 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { 
   LayoutDashboard, 
@@ -87,6 +88,15 @@ const bottomNavItems = [
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const { setOpenMobile, isMobile, setOpen } = useSidebar();
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    } else {
+      setOpen(false);
+    }
+  };
 
   return (
     <Sidebar className="border-r-0">
@@ -116,6 +126,7 @@ export function AppSidebar() {
                     isActive={location === item.url}
                     className="h-10"
                     data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+                    onClick={handleNavClick}
                   >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
@@ -139,6 +150,7 @@ export function AppSidebar() {
                     isActive={location === item.url}
                     className="h-9"
                     data-testid={`nav-${item.url.split('/').pop()}`}
+                    onClick={handleNavClick}
                   >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
@@ -161,6 +173,7 @@ export function AppSidebar() {
                     isActive={location === item.url}
                     className="h-10"
                     data-testid={`nav-${item.url.slice(1)}`}
+                    onClick={handleNavClick}
                   >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />

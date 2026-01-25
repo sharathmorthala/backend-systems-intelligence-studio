@@ -4,11 +4,12 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, Menu } from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
 import Home from "@/pages/home";
 import LogAnalyzer from "@/pages/tools/log-analyzer";
 import ApiReviewer from "@/pages/tools/api-reviewer";
@@ -39,6 +40,25 @@ function Router() {
   );
 }
 
+function HamburgerMenuButton() {
+  const { toggleSidebar, open, openMobile, isMobile } = useSidebar();
+  const isOpen = isMobile ? openMobile : open;
+  
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleSidebar}
+      data-testid="button-sidebar-toggle"
+      aria-label="Toggle sidebar menu"
+      aria-expanded={isOpen}
+      aria-controls="sidebar"
+    >
+      <Menu className="h-5 w-5" />
+    </Button>
+  );
+}
+
 function App() {
   const sidebarStyle = {
     "--sidebar-width": "18rem",
@@ -55,7 +75,7 @@ function App() {
               <div className="flex flex-col flex-1 overflow-hidden">
                 <header className="flex items-center justify-between gap-4 px-6 py-3 border-b bg-background">
                   <div className="flex items-center gap-4">
-                    <SidebarTrigger data-testid="button-sidebar-toggle" />
+                    <HamburgerMenuButton />
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <Link href="/documentation">

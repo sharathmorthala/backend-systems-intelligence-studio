@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
@@ -22,6 +24,25 @@ import {
   Linkedin
 } from "lucide-react";
 import profilePhoto from "@/assets/profile-photo.png";
+
+function useIsTouchDevice() {
+  const [isTouch, setIsTouch] = useState(false);
+  
+  useEffect(() => {
+    const checkTouch = () => {
+      setIsTouch(
+        'ontouchstart' in window || 
+        navigator.maxTouchPoints > 0 ||
+        window.matchMedia('(pointer: coarse)').matches
+      );
+    };
+    checkTouch();
+    window.addEventListener('resize', checkTouch);
+    return () => window.removeEventListener('resize', checkTouch);
+  }, []);
+  
+  return isTouch;
+}
 
 const ENGINEER = {
   name: "Sharath Morthala",
@@ -162,34 +183,62 @@ const skillSections: SkillSection[] = [
   }
 ];
 
+function SkillCardContent({ skill }: { skill: Skill }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium px-2 py-0.5 rounded bg-primary/10 text-primary">
+          {skill.level}
+        </span>
+      </div>
+      <p className="text-sm leading-relaxed">{skill.description}</p>
+    </div>
+  );
+}
+
 function SkillCard({ skill }: { skill: Skill }) {
   const Icon = skill.icon;
+  const isTouch = useIsTouchDevice();
+  const [open, setOpen] = useState(false);
+  
+  const buttonElement = (
+    <button 
+      type="button"
+      className="flex items-center gap-2 p-3 rounded-md border bg-card hover-elevate cursor-default text-left w-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+      data-testid={`skill-${skill.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+    >
+      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+      <span className="text-sm font-medium">{skill.name}</span>
+    </button>
+  );
+
+  if (isTouch) {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          {buttonElement}
+        </PopoverTrigger>
+        <PopoverContent 
+          className="max-w-xs" 
+          data-testid={`popover-${skill.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+        >
+          <SkillCardContent skill={skill} />
+        </PopoverContent>
+      </Popover>
+    );
+  }
   
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button 
-          type="button"
-          className="flex items-center gap-2 p-3 rounded-md border bg-card hover-elevate cursor-default text-left w-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-          data-testid={`skill-${skill.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-        >
-          <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span className="text-sm font-medium">{skill.name}</span>
-        </button>
+        {buttonElement}
       </TooltipTrigger>
       <TooltipContent 
         side="top" 
         className="max-w-xs p-3" 
         data-testid={`tooltip-${skill.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
       >
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium px-2 py-0.5 rounded bg-primary/10 text-primary">
-              {skill.level}
-            </span>
-          </div>
-          <p className="text-sm leading-relaxed">{skill.description}</p>
-        </div>
+        <SkillCardContent skill={skill} />
       </TooltipContent>
     </Tooltip>
   );

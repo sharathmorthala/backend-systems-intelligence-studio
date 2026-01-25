@@ -1,6 +1,47 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+server/public/
+
+# Environment variables (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
-server/public
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Vite temp files
 vite.config.ts.*
+
+# Build artifacts
 *.tar.gz
+*.tgz
+
+# Replit-specific (optional - remove if open-sourcing on Replit)
+.replit
+replit.md
+.upm/
+attached_assets/

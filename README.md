@@ -1,207 +1,324 @@
-# AI-Assisted Log & Incident Analyzer
+# Backend Systems Intelligence Studio
 
-A production-minded web application that analyzes application logs and stack traces using AI assistance. Built to showcase senior backend and platform engineering skills with emphasis on reliability, debuggability, and clean architecture.
+Production-minded backend analysis tools for engineers building reliable, scalable systems.
+
+---
 
 ## Overview
 
-This application accepts raw application logs and stack traces, normalizes and structures them on the backend, and uses an LLM (via Hugging Face Inference API) to:
+Backend Systems Intelligence Studio is an interactive engineering portfolio demonstrating senior backend and platform engineering expertise. It contains **6 specialized tools** for backend engineering tasks, all powered by AI assistance via the Hugging Face Inference API (Mixtral-8x7B-Instruct model) with deterministic fallback behavior ensuring reliability.
 
-- **Group similar errors** by pattern recognition
-- **Summarize root causes** with confidence levels
-- **Identify missing context** that would help debugging
-- **Suggest mitigation and investigation steps**
+This application demonstrates:
+- **Backend architecture and API design** — Clean separation of concerns, structured analysis pipelines
+- **Observability and reliability engineering** — Production-minded tooling for debugging and risk assessment
+- **Responsible LLM integration** — AI as assistant, not source of truth, with fallback patterns
 
-All outputs are structured JSON with validated schemas - no free-form blobs.
+### Who This Is For
+
+- Backend engineers evaluating code quality and system design
+- Platform teams analyzing dependencies and resilience strategies
+- Engineering managers reviewing log analysis and incident patterns
+- Anyone interested in production-grade AI-assisted tooling
+
+---
+
+## Design Philosophy
+
+### Deterministic Analysis First
+
+Every tool performs structured, deterministic analysis before involving AI:
+- Log parsing and error grouping happen in code
+- Code scanning uses AST-based static analysis (JavaScript/TypeScript) or structural parsing (Java, Kotlin, Python)
+- Dependency manifests are parsed and validated deterministically
+
+### LLMs as Assistants, Not Source of Truth
+
+The LLM provides suggestions and explanations, but the system doesn't blindly trust its outputs:
+- **Schema validation** — All LLM responses are validated against Zod schemas
+- **Fallback mode** — If LLM fails or is unavailable, the system uses deterministic pattern matching
+- **Transparency** — Analysis includes indicators when fallback was used
+
+### Production-Minded Tooling
+
+- Graceful degradation ensures tools always work
+- Structured JSON output (never free-form blobs)
+- Clear error handling and descriptive messages
+
+---
+
+## Tools
+
+### 1. Log & Incident Analyzer
+**Input:** Raw application logs, stack traces  
+**Analysis:** Normalizes logs, groups similar errors, identifies root causes  
+**Output:** Structured JSON with error groups, probable causes, suggested actions
+
+### 2. API Contract Reviewer
+**Input:** REST request/response JSON, OpenAPI specs  
+**Analysis:** Identifies missing fields, inconsistent error models, breaking changes  
+**Output:** Contract issues, inconsistencies, best practice recommendations
+
+### 3. Resilience Strategy Advisor
+**Input:** Failure scenario descriptions  
+**Analysis:** Recommends resilience patterns  
+**Output:** Retry strategies, idempotency guidance, circuit breaker config, what NOT to retry
+
+### 4. Backend Code Risk Scanner
+**Input:** JavaScript, TypeScript, Java, Kotlin, or Python code  
+**Analysis:** AST-based static analysis for JavaScript (via @babel/parser), structural parsing for other languages  
+**Detection:** Undeclared variables, unsafe property access, blocking I/O, resource leaks, empty catch blocks, null safety risks  
+**Output:** Risk categorization by severity and line number, with best practices recommendations
+
+### 5. System Design Reviewer
+**Input:** System design descriptions  
+**Analysis:** Identifies architectural concerns  
+**Output:** Bottlenecks, single points of failure, scalability concerns, observability gaps
+
+### 6. Dependency Risk & Vulnerability Analyzer
+**Input:** Dependency manifests (pom.xml, package.json, build.gradle)  
+**Analysis:** Detects known vulnerable libraries, unpinned versions, supply-chain risks  
+**Output:** Risk list with severity, per-dependency breakdown, actionable recommendations
+
+---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Frontend (React)                        │
-│  ┌───────────┐  ┌───────────────┐  ┌────────────────────────┐  │
-│  │ Log Input │  │ Parsed Logs   │  │ AI Analysis Panel      │  │
-│  │ Panel     │  │ & Error Groups│  │ - Root Causes          │  │
-│  │           │  │               │  │ - Missing Context      │  │
-│  │           │  │               │  │ - Recommendations      │  │
-│  └───────────┘  └───────────────┘  └────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     Backend (Express.js)                        │
-│  ┌────────────┐  ┌─────────────┐  ┌──────────────────────────┐ │
-│  │ API Routes │──│ Log Parser  │──│ LLM Service              │ │
-│  │            │  │             │  │ (Hugging Face + Fallback)│ │
-│  └────────────┘  └─────────────┘  └──────────────────────────┘ │
-│                        │                                        │
-│                        ▼                                        │
-│              ┌─────────────────┐                               │
-│              │ In-Memory Store │                               │
-│              │ (Analysis Cache)│                               │
-│              └─────────────────┘                               │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                         Frontend (React + Vite)                      │
+│  ┌─────────────┐  ┌─────────────────────┐  ┌─────────────────────┐  │
+│  │ Tool Input  │  │ Structured Analysis │  │ LLM Insights Panel  │  │
+│  │ Panel       │  │ (Deterministic)     │  │ (AI-Assisted)       │  │
+│  └─────────────┘  └─────────────────────┘  └─────────────────────┘  │
+│                          Three-Column Layout                         │
+└─────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       Backend (Express.js 5)                         │
+│  ┌──────────────┐  ┌──────────────────┐  ┌────────────────────────┐ │
+│  │ API Routes   │──│ Tool Services    │──│ LLM Service            │ │
+│  │ (Zod valid.) │  │ (AST Analysis)   │  │ (HF API + Fallback)    │ │
+│  └──────────────┘  └──────────────────┘  └────────────────────────┘ │
+│                              │                                       │
+│                              ▼                                       │
+│                    ┌─────────────────┐                              │
+│                    │ In-Memory Store │                              │
+│                    │ (Analysis Cache)│                              │
+│                    └─────────────────┘                              │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Components
 
-1. **Log Parser** (`server/log-parser.ts`)
-   - Parses multiple log formats (ISO timestamps, common formats)
-   - Extracts log levels, sources, messages, and stack traces
-   - Groups errors by pattern similarity
+| Component | File | Responsibility |
+|-----------|------|----------------|
+| **Log Parser** | `server/log-parser.ts` | Parse multiple log formats, extract levels/sources, group errors |
+| **LLM Service** | `server/llm-service.ts` | Hugging Face API integration with fallback |
+| **Tool Services** | `server/tool-services.ts` | Unified LLM interface for all 5 tools (API review, resilience, system design, dependencies) |
+| **AST Analyzer** | `server/ast-analyzer.ts` | JavaScript/TypeScript AST parsing via Babel, structural analysis for Java/Kotlin/Python |
+| **API Routes** | `server/routes.ts` | RESTful endpoints with Zod validation |
+| **Email Service** | `server/email-service.ts` | Contact form delivery via Resend |
 
-2. **LLM Service** (`server/llm-service.ts`)
-   - Integrates with Hugging Face Inference API
-   - Uses Mixtral-8x7B model for analysis
-   - Implements deterministic fallback when LLM unavailable
-   - Validates and normalizes LLM responses
+### API Endpoints
 
-3. **API Routes** (`server/routes.ts`)
-   - RESTful endpoints with Zod validation
-   - Comprehensive error handling and logging
-   - Async/await with proper error propagation
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | Health check with API key status |
+| `/api/analyze` | POST | Log & Incident Analyzer |
+| `/api/tools/api-review` | POST | API Contract Reviewer |
+| `/api/tools/resilience-advice` | POST | Resilience Strategy Advisor |
+| `/api/tools/code-scan` | POST | Backend Code Risk Scanner |
+| `/api/tools/system-review` | POST | System Design Reviewer |
+| `/api/tools/dependency-analyze` | POST | Dependency Risk Analyzer |
+| `/api/contact` | POST | Contact form submission |
 
-## Design Trade-offs
-
-### LLM as Assistant, Not System of Record
-
-The LLM provides suggestions and analysis, but the system doesn't blindly trust its outputs:
-
-- **Schema validation**: All LLM responses are validated against Zod schemas
-- **Fallback mode**: If LLM fails, the system uses deterministic pattern matching
-- **Confidence levels**: Analysis includes confidence indicators for transparency
-
-### Reliability vs. Speed
-
-- **Timeout handling**: API requests have reasonable timeouts
-- **Graceful degradation**: Fallback analysis ensures the app always works
-- **Progress indicators**: Users see detailed loading states during analysis
-
-### Simplicity vs. Completeness
-
-- **In-memory storage**: Fast iteration without database complexity
-- **Single LLM model**: Focused on one reliable model vs. multiple options
-- **Minimal dependencies**: Only essential packages for maintainability
-
-## Error Handling & Reliability Strategies
-
-### API Layer
-- Request validation using Zod schemas with descriptive error messages
-- Async handler wrapper to catch and propagate errors
-- Global error handler for uncaught exceptions
-
-### LLM Integration
-- API key presence check before attempting calls
-- Rate limit detection (429) and model loading (503) handling
-- JSON parsing with fallback for malformed responses
-- Deterministic fallback analysis based on log patterns
-
-### Frontend
-- Loading states with progress indicators
-- Toast notifications for success/error feedback
-- Graceful handling of network failures
-
-## Scaling Considerations
-
-For production deployment, consider:
-
-### Infrastructure
-- **Database**: Replace in-memory storage with PostgreSQL for persistence
-- **Caching**: Redis for caching frequent analysis patterns
-- **Queue**: Bull/BullMQ for async log processing at scale
-
-### Performance
-- **Streaming**: Stream large log files instead of loading fully in memory
-- **Pagination**: Paginate parsed logs and analysis history
-- **Worker processes**: Offload LLM calls to background workers
-
-### Observability
-- **Structured logging**: JSON logging with correlation IDs
-- **Metrics**: Prometheus metrics for API latency, LLM call success rate
-- **Tracing**: Distributed tracing with OpenTelemetry
-
-## API Endpoints
-
-### POST /api/analyze
-Analyze raw logs and get structured analysis.
-
-**Request:**
-```json
-{
-  "rawLogs": "2024-01-23T10:15:32.123Z ERROR [PaymentService] Failed to process payment..."
-}
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "createdAt": "ISO timestamp",
-  "status": "completed",
-  "parsedLogs": [...],
-  "errorGroups": [...],
-  "analysis": {
-    "summary": "...",
-    "rootCauses": [...],
-    "missingContext": [...],
-    "recommendations": [...]
-  },
-  "usedFallback": false
-}
-```
-
-### GET /api/analysis/:id
-Retrieve a previous analysis by ID.
-
-### GET /api/history
-Get list of past analyses.
-
-### GET /api/health
-Health check endpoint.
-
-## LLM Provider Notes
-
-### Current: Hugging Face Inference API
-
-Using `mistralai/Mixtral-8x7B-Instruct-v0.1` model via Hugging Face's free inference API.
-
-**Setup:**
-1. Create account at [huggingface.co](https://huggingface.co)
-2. Generate API token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
-3. Set `HUGGINGFACE_API_KEY` environment variable
-
-### Switching Providers
-
-To replace with another provider:
-
-1. **OpenAI**: Update `HUGGINGFACE_API_URL` and prompt format
-2. **Anthropic**: Modify request/response handling for Claude API
-3. **Local LLM**: Use Ollama or similar with local endpoint
-
-Key changes needed:
-- Update API endpoint URL
-- Adjust authentication headers
-- Modify prompt format (instruction wrapping differs per model)
-- Update response parsing for different output formats
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# The app runs on port 5000
-```
-
-## Environment Variables
-
-- `HUGGINGFACE_API_KEY`: Hugging Face API token (required for AI analysis)
+---
 
 ## Tech Stack
 
-- **Frontend**: React, TanStack Query, Tailwind CSS, Shadcn UI
-- **Backend**: Express.js, TypeScript
-- **Validation**: Zod
-- **Build**: Vite, esbuild
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for bundling and HMR
+- **TanStack Query** for server state management
+- **Tailwind CSS** with dark mode support
+- **Shadcn/ui** component library (Radix UI primitives)
+- **Wouter** for client-side routing
+
+### Backend
+- **Express.js 5** with TypeScript
+- **Zod** for request/response validation
+- **Babel** (@babel/parser, @babel/traverse) for JavaScript AST analysis
+
+### LLM Integration
+- **Hugging Face Inference API** — Mixtral-8x7B-Instruct-v0.1 model
+- Deterministic fallback when API unavailable
+
+### Email
+- **Resend** for contact form notifications
+
+---
+
+## Local Setup
+
+### Prerequisites
+
+- Node.js 20+ (LTS recommended)
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/backend-systems-intelligence-studio.git
+cd backend-systems-intelligence-studio
+
+# Install dependencies
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+# Required for AI-powered analysis (free tier available)
+HUGGINGFACE_API_KEY=hf_your_api_token_here
+
+# Optional: Override contact form recipient
+CONTACT_EMAIL=your-email@example.com
+```
+
+**Getting a Hugging Face API Key:**
+1. Create account at [huggingface.co](https://huggingface.co)
+2. Generate API token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+3. Use "Read" access level (free tier is sufficient)
+
+### Running Locally
+
+```bash
+# Development mode (with hot reload)
+npm run dev
+
+# The app runs on http://localhost:5000
+```
+
+### Production Build
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
+
+---
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `HUGGINGFACE_API_KEY` | Yes* | — | Hugging Face API token for LLM analysis |
+| `CONTACT_EMAIL` | No | morthalasharath@gmail.com | Contact form recipient |
+| `PORT` | No | 5000 | Server port |
+| `NODE_ENV` | No | development | Environment mode |
+
+*Without `HUGGINGFACE_API_KEY`, the app still works using deterministic fallback analysis.
+
+### Switching LLM Providers
+
+To use a different LLM provider, modify `server/llm-service.ts` and `server/tool-services.ts`:
+
+1. **OpenAI**: Update API endpoint and prompt format
+2. **Anthropic**: Modify request/response handling for Claude API
+3. **Local LLM**: Use Ollama or similar with local endpoint
+
+---
+
+## Documentation
+
+For detailed documentation, see the [`/docs`](./docs) folder:
+
+- **[TOOLS.md](./docs/TOOLS.md)** — Detailed guide for each analysis tool
+- **[DESIGN.md](./docs/DESIGN.md)** — Architectural decisions and trade-offs
+- **[LIMITATIONS.md](./docs/LIMITATIONS.md)** — Known limitations and what this is not
+- **[ROADMAP.md](./docs/ROADMAP.md)** — Potential future improvements
+
+---
+
+## Production Notes
+
+### What This Is
+
+- A **portfolio demonstration** of backend engineering skills
+- A **learning tool** for understanding production patterns
+- A **starting point** for building similar analysis tools
+
+### What This Is Not
+
+- **Not a replacement** for enterprise vulnerability scanners (e.g., Snyk, Dependabot)
+- **Not a CI/CD tool** — designed for interactive analysis
+- **Not a security audit** — highlights patterns, not guarantees
+
+### Scaling Considerations
+
+For production deployment at scale:
+
+| Concern | Current | Production Recommendation |
+|---------|---------|---------------------------|
+| **Storage** | In-memory | PostgreSQL for persistence |
+| **Caching** | None | Redis for analysis caching |
+| **Queue** | Sync | Bull/BullMQ for async processing |
+| **Logging** | Console | Structured JSON + correlation IDs |
+| **Metrics** | None | Prometheus + Grafana |
+| **Tracing** | None | OpenTelemetry |
+
+---
+
+## Project Structure
+
+```
+├── client/                  # Frontend (React + Vite)
+│   └── src/
+│       ├── components/      # Reusable UI components
+│       │   └── ui/          # Shadcn/ui primitives
+│       ├── pages/           # Route pages
+│       │   └── tools/       # Individual tool pages
+│       ├── hooks/           # Custom React hooks
+│       └── lib/             # Utilities and query client
+├── server/                  # Backend (Express.js)
+│   ├── routes.ts            # API endpoint definitions
+│   ├── log-parser.ts        # Log parsing and error grouping
+│   ├── llm-service.ts       # Hugging Face integration
+│   ├── tool-services.ts     # Tool-specific LLM prompts
+│   ├── ast-analyzer.ts      # JavaScript AST analysis
+│   ├── email-service.ts     # Resend email integration
+│   └── storage.ts           # In-memory storage
+├── shared/                  # Shared types and schemas
+│   └── schema.ts            # Zod schemas for validation
+├── docs/                    # Additional documentation
+└── public/                  # Static assets
+```
+
+---
+
+## License
+
+MIT License — See [LICENSE](LICENSE) for details.
+
+---
+
+## Author
+
+**Sharath Morthala**  
+Backend & Platform Engineer
+
+- GitHub: [github.com/yourusername](https://github.com/yourusername)
+- LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
+
+---
+
+*LLMs are used as assistants. Deterministic backend logic remains the source of truth.*

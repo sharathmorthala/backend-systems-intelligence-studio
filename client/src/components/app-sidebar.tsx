@@ -190,7 +190,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         <div className="space-y-2">
           <a
-            href="https://github.com/sharathmorthala"
+            href="https://github.com/sharathmorthala/backend-systems-intelligence-studio"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full"

@@ -316,7 +316,7 @@ MIT License — See [LICENSE](LICENSE) for details.
 **Sharath Morthala**  
 Backend & Platform Engineer
 
-- GitHub: [github.com/sharathmorthala](https://github.com/sharathmorthala)
+- GitHub: [github.com/sharathmorthala/backend-systems-intelligence-studio](https://github.com/sharathmorthala/backend-systems-intelligence-studio)
 - LinkedIn: [linkedin.com/in/sharath-morthala-2657a626b](https://www.linkedin.com/in/sharath-morthala-2657a626b)
 
 ---

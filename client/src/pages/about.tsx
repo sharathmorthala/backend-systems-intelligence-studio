@@ -47,7 +47,7 @@ function useIsTouchDevice() {
 const ENGINEER = {
   name: "Sharath Morthala",
   title: "Senior Backend & Platform Engineer",
-  githubUrl: "https://github.com/sharathmorthala",
+  githubUrl: "https://github.com/sharathmorthala/backend-systems-intelligence-studio",
   linkedinUrl: "https://www.linkedin.com/in/sharath-morthala-2657a626b",
   photo: profilePhoto,
 };

@@ -317,7 +317,7 @@ MIT License — See [LICENSE](LICENSE) for details.
 Backend & Platform Engineer
 
 - GitHub: [github.com/sharathchandr68](https://github.com/sharathchandr68)
-- LinkedIn: [linkedin.com/in/sharath-morthala](https://linkedin.com/in/sharath-morthala)
+- LinkedIn: [linkedin.com/in/sharath-morthala-2657a626b](https://www.linkedin.com/in/sharath-morthala-2657a626b)
 
 ---
 

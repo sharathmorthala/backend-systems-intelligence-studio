@@ -23,7 +23,8 @@ import {
   User,
   Github,
   Package,
-  Mail
+  Mail,
+  Handshake
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -73,6 +74,11 @@ const bottomNavItems = [
     title: "About the Engineer",
     url: "/about",
     icon: User,
+  },
+  {
+    title: "Advisory & Collaboration",
+    url: "/advisory",
+    icon: Handshake,
   },
   {
     title: "Contact",

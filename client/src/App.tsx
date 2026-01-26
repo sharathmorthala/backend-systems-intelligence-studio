@@ -20,6 +20,7 @@ import DependencyAnalyzer from "@/pages/tools/dependency-analyzer";
 import DocumentationPage from "@/pages/documentation";
 import AboutPage from "@/pages/about";
 import ContactPage from "@/pages/contact";
+import AdvisoryPage from "@/pages/advisory";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/documentation" component={DocumentationPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/advisory" component={AdvisoryPage} />
       <Route component={NotFound} />
     </Switch>
   );

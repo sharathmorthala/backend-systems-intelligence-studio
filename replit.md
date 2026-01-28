@@ -71,17 +71,21 @@ Preferred communication style: Simple, everyday language.
 - **Contact** (`client/src/pages/contact.tsx`): Contact form with client-side validation and email delivery via Resend
 
 ### Backend Architecture
-- **Framework**: Express.js 5 with TypeScript running on Node.js
+- **Framework**: Python FastAPI (migrated from Express.js 5 with TypeScript)
 - **API Design**: RESTful endpoints per tool with clear boundaries
-- **Request Handling**: Custom async handler wrapper for consistent error handling
-- **Validation**: Zod schemas for request/response validation
+- **Request Handling**: FastAPI async endpoints with exception handlers
+- **Validation**: Pydantic models for request/response validation (migrated from Zod schemas)
+- **Proxy**: Express.js serves as a thin proxy layer, forwarding /api/* requests to FastAPI on port 5001
 
-### Core Services
-- **Log Parser** (`server/log-parser.ts`): Parses multiple log formats, extracts levels/sources/messages, groups errors
-- **LLM Service** (`server/llm-service.ts`): Hugging Face API integration for log analysis
-- **Tool Services** (`server/tool-services.ts`): LLM integration for all 5 tools with deterministic fallbacks
-- **Email Service** (`server/email-service.ts`): Resend integration for contact form email notifications
-- **Storage** (`server/storage.ts`): In-memory storage for analysis results
+### Core Services (Python FastAPI - api/ directory)
+- **Schemas** (`api/schemas.py`): Pydantic models for all request/response validation
+- **Log Parser** (`api/log_parser.py`): Parses multiple log formats, extracts levels/sources/messages, groups errors
+- **LLM Service** (`api/llm_service.py`): Hugging Face API integration for log analysis with Mixtral-8x7B
+- **Code Analyzer** (`api/code_analyzer.py`): Regex-based static analysis for JavaScript, Python, Java, Kotlin
+- **Tool Services** (`api/tool_services.py`): LLM integration for all 6 tools with deterministic fallbacks
+- **Email Service** (`api/email_service.py`): Resend integration for contact form email notifications
+- **Storage** (`api/storage.py`): In-memory storage for analysis results
+- **Main** (`api/main.py`): FastAPI application with all route definitions
 
 ### API Endpoints
 - `POST /api/analyze` - Log & Incident Analyzer
@@ -117,8 +121,9 @@ Preferred communication style: Simple, everyday language.
 - **PostgreSQL**: Configured via Drizzle ORM (schema ready in `shared/schema.ts`)
 - Currently using in-memory storage; database schema ready for persistence
 
-### Key NPM Packages
-- **Server**: express, drizzle-orm, zod, zod-validation-error
+### Key Packages
+- **Python Backend**: fastapi, uvicorn, httpx, pydantic, resend
+- **Node.js Proxy**: express, http-proxy-middleware
 - **Client**: React, TanStack Query, Radix UI primitives, Tailwind CSS
 - **Build**: Vite, esbuild, tsx
 
@@ -126,7 +131,7 @@ Preferred communication style: Simple, everyday language.
 
 ### LLM Integration Philosophy
 - LLMs are strictly assistants, not the system of record
-- All outputs are structured and validated with Zod schemas
+- All outputs are structured and validated with Pydantic schemas (Python FastAPI backend)
 - Deterministic fallback behavior ensures tools always work
 - Footer disclaimer on all pages: "LLMs are used as assistants. Deterministic backend logic remains the source of truth."
 
@@ -138,7 +143,23 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### UI Polish & Branding Updates (Latest)
+### Backend Migration: Express.js to Python FastAPI (Latest)
+- Migrated entire backend from Express.js/TypeScript to Python FastAPI
+- Created new `api/` directory with complete Python backend:
+  - `api/main.py`: FastAPI application with all route definitions
+  - `api/schemas.py`: Pydantic models (migrated from Zod schemas)
+  - `api/llm_service.py`: HuggingFace API integration with Mixtral-8x7B
+  - `api/log_parser.py`: Log parsing and error grouping
+  - `api/code_analyzer.py`: Regex-based static analysis for multiple languages
+  - `api/tool_services.py`: All 6 tool services with deterministic fallbacks
+  - `api/email_service.py`: Resend integration for contact form
+  - `api/storage.py`: In-memory storage
+- Express.js now serves as a thin proxy layer using http-proxy-middleware
+- Express spawns FastAPI (uvicorn) on port 5001 and proxies /api/* requests
+- All API endpoints preserved with identical contracts - zero frontend changes required
+- Maintained all functionality: LLM integration, fallback logic, email delivery
+
+### UI Polish & Branding Updates
 - Updated branding: "Production-minded backend analysis tools for engineers building reliable, scalable systems"
 - Added terminal prompt logo (>_) as minimal monochrome icon in sidebar header
 - Removed Replit branding and user avatar from UI

@@ -1,279 +1,106 @@
 import type { Express, Request, Response, NextFunction } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { parseLogs, groupErrors } from "./log-parser";
-import { analyzeWithLLM } from "./llm-service";
-import { 
-  reviewApiContract, 
-  getResilienceAdvice, 
-  scanCode, 
-  reviewSystemDesign,
-  analyzeDependencies
-} from "./tool-services";
-import { sendContactEmail } from "./email-service";
-import { analyzeLogsRequestSchema, type AnalyzeLogsResponse } from "@shared/schema";
-import { randomUUID } from "crypto";
-import { fromZodError } from "zod-validation-error";
-import { z } from "zod";
+import { type Server } from "http";
+import { createProxyMiddleware, Options } from "http-proxy-middleware";
+import { spawn, ChildProcess } from "child_process";
 
-// Error handling middleware
-function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
-) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
+const FASTAPI_URL = "http://127.0.0.1:5001";
+let fastapiProcess: ChildProcess | null = null;
+
+async function startFastAPI(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    console.log("[FastAPI] Starting Python backend on port 5001...");
+    
+    fastapiProcess = spawn("python", [
+      "-m", "uvicorn", "api.main:app", 
+      "--host", "127.0.0.1", 
+      "--port", "5001"
+    ], {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env }
+    });
+
+    let started = false;
+
+    fastapiProcess.stdout?.on("data", (data) => {
+      const output = data.toString();
+      console.log("[FastAPI]", output.trim());
+      if (output.includes("Application startup complete") && !started) {
+        started = true;
+        resolve();
+      }
+    });
+
+    fastapiProcess.stderr?.on("data", (data) => {
+      console.error("[FastAPI Error]", data.toString().trim());
+    });
+
+    fastapiProcess.on("error", (err) => {
+      console.error("[FastAPI] Failed to start:", err);
+      reject(err);
+    });
+
+    fastapiProcess.on("exit", (code) => {
+      console.log(`[FastAPI] Process exited with code ${code}`);
+      fastapiProcess = null;
+    });
+
+    setTimeout(() => {
+      if (!started) {
+        console.log("[FastAPI] Assuming started after timeout");
+        resolve();
+      }
+    }, 5000);
+  });
 }
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Health check endpoint
-  app.get("/api/health", (req, res) => {
-    res.json({ 
-      status: "ok", 
-      timestamp: new Date().toISOString(),
-      hasApiKey: !!process.env.HUGGINGFACE_API_KEY 
-    });
+  await startFastAPI();
+
+  const proxyOptions: Options = {
+    target: FASTAPI_URL,
+    changeOrigin: true,
+    on: {
+      proxyReq: (proxyReq, req, res) => {
+        console.log(`[Proxy] ${req.method} ${req.originalUrl} -> FastAPI`);
+        
+        if ((req as any).rawBody && ['POST', 'PUT', 'PATCH'].includes(req.method || '')) {
+          const bodyData = (req as any).rawBody;
+          proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+          proxyReq.write(bodyData);
+        }
+      },
+      error: (err, req, res) => {
+        console.error("[Proxy] Error:", err.message);
+        if (res && 'status' in res && typeof res.status === 'function') {
+          (res as Response).status(502).json({ 
+            error: "Backend service unavailable",
+            details: err.message 
+          });
+        }
+      }
+    }
+  };
+
+  app.use("/api", createProxyMiddleware({
+    ...proxyOptions,
+    pathRewrite: (path, req) => `/api${path}`
+  }));
+
+  process.on("SIGTERM", () => {
+    if (fastapiProcess) {
+      console.log("[FastAPI] Shutting down...");
+      fastapiProcess.kill();
+    }
   });
 
-  // Analyze logs endpoint
-  app.post(
-    "/api/analyze",
-    asyncHandler(async (req, res) => {
-      console.log("[API] Received analyze request");
-      
-      // Validate request body
-      const parseResult = analyzeLogsRequestSchema.safeParse(req.body);
-      
-      if (!parseResult.success) {
-        const error = fromZodError(parseResult.error);
-        console.error("[API] Validation error:", error.message);
-        res.status(400).json({ 
-          error: "Invalid request", 
-          details: error.message 
-        });
-        return;
-      }
-
-      const { rawLogs } = parseResult.data;
-      const analysisId = randomUUID();
-      const createdAt = new Date().toISOString();
-
-      try {
-        console.log("[API] Parsing logs...");
-        // Step 1: Parse logs
-        const parsedLogs = parseLogs(rawLogs);
-        console.log(`[API] Parsed ${parsedLogs.length} log entries`);
-
-        // Step 2: Group errors
-        console.log("[API] Grouping errors...");
-        const errorGroups = groupErrors(parsedLogs);
-        console.log(`[API] Found ${errorGroups.length} error groups`);
-
-        // Step 3: Analyze with LLM
-        console.log("[API] Analyzing with LLM...");
-        const { analysis, usedFallback } = await analyzeWithLLM(parsedLogs, errorGroups);
-        console.log(`[API] Analysis complete (fallback: ${usedFallback})`);
-
-        // Build response
-        const response: AnalyzeLogsResponse = {
-          id: analysisId,
-          createdAt,
-          status: "completed",
-          parsedLogs,
-          errorGroups,
-          analysis,
-          usedFallback,
-        };
-
-        // Save to storage
-        await storage.saveAnalysis(response);
-
-        res.json(response);
-      } catch (error) {
-        console.error("[API] Analysis failed:", error);
-        
-        const errorResponse: AnalyzeLogsResponse = {
-          id: analysisId,
-          createdAt,
-          status: "failed",
-          parsedLogs: [],
-          errorGroups: [],
-          analysis: null,
-          error: error instanceof Error ? error.message : "Unknown error occurred",
-          usedFallback: false,
-        };
-
-        await storage.saveAnalysis(errorResponse);
-        
-        res.status(500).json(errorResponse);
-      }
-    })
-  );
-
-  // Get analysis by ID
-  app.get(
-    "/api/analysis/:id",
-    asyncHandler(async (req, res) => {
-      const id = req.params.id as string;
-      const analysis = await storage.getAnalysis(id);
-      
-      if (!analysis) {
-        res.status(404).json({ error: "Analysis not found" });
-        return;
-      }
-
-      res.json(analysis);
-    })
-  );
-
-  // Get analysis history
-  app.get(
-    "/api/history",
-    asyncHandler(async (req, res) => {
-      const history = await storage.getAnalysisHistory();
-      res.json(history);
-    })
-  );
-
-  // Tool: API Contract Reviewer
-  app.post(
-    "/api/tools/api-review",
-    asyncHandler(async (req, res) => {
-      console.log("[API] API Review request received");
-      const { apiContract } = req.body;
-      
-      if (!apiContract || typeof apiContract !== "string") {
-        res.status(400).json({ error: "apiContract is required" });
-        return;
-      }
-
-      const result = await reviewApiContract(apiContract);
-      res.json(result);
-    })
-  );
-
-  // Tool: Resilience Strategy Advisor
-  app.post(
-    "/api/tools/resilience-advice",
-    asyncHandler(async (req, res) => {
-      console.log("[API] Resilience advice request received");
-      const { scenario } = req.body;
-      
-      if (!scenario || typeof scenario !== "string") {
-        res.status(400).json({ error: "scenario is required" });
-        return;
-      }
-
-      const result = await getResilienceAdvice(scenario);
-      res.json(result);
-    })
-  );
-
-  // Tool: Backend Code Risk Scanner
-  app.post(
-    "/api/tools/code-scan",
-    asyncHandler(async (req, res) => {
-      console.log("[API] Code scan request received");
-      const { code } = req.body;
-      
-      if (!code || typeof code !== "string") {
-        res.status(400).json({ error: "code is required" });
-        return;
-      }
-
-      const result = await scanCode(code);
-      res.json(result);
-    })
-  );
-
-  // Tool: System Design Reviewer
-  app.post(
-    "/api/tools/system-review",
-    asyncHandler(async (req, res) => {
-      console.log("[API] System review request received");
-      const { design } = req.body;
-      
-      if (!design || typeof design !== "string") {
-        res.status(400).json({ error: "design is required" });
-        return;
-      }
-
-      const result = await reviewSystemDesign(design);
-      res.json(result);
-    })
-  );
-
-  // Tool: Dependency Risk & Vulnerability Analyzer
-  app.post(
-    "/api/tools/dependency-analyze",
-    asyncHandler(async (req, res) => {
-      console.log("[API] Dependency analysis request received");
-      const { manifest } = req.body;
-      
-      if (!manifest || typeof manifest !== "string") {
-        res.status(400).json({ error: "manifest is required" });
-        return;
-      }
-
-      const result = await analyzeDependencies(manifest);
-      res.json(result);
-    })
-  );
-
-  // Contact form endpoint with email notification
-  app.post(
-    "/api/contact",
-    asyncHandler(async (req, res) => {
-      console.log("[API] Contact form submission received");
-      
-      // Validate input with Zod
-      const contactSchema = z.object({
-        name: z.string().min(1, "Name is required").max(100, "Name too long"),
-        email: z.string().email("Invalid email format").max(254, "Email too long"),
-        message: z.string().min(1, "Message is required").max(5000, "Message too long")
-      });
-      
-      const parseResult = contactSchema.safeParse(req.body);
-      
-      if (!parseResult.success) {
-        const error = fromZodError(parseResult.error);
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      
-      const { name, email, message } = parseResult.data;
-      
-      // Log only non-sensitive info
-      console.log(`[Contact] New submission from: ${email}`);
-      
-      // Send email notification via Resend
-      const emailResult = await sendContactEmail({ name, email, message });
-      
-      if (!emailResult.success) {
-        console.error("[Contact] Email failed:", emailResult.error);
-        res.status(500).json({ 
-          success: false, 
-          message: "Message received but email notification failed",
-          error: emailResult.error 
-        });
-        return;
-      }
-      
-      console.log("[Contact] Email sent successfully");
-      res.json({ success: true, message: "Message sent successfully" });
-    })
-  );
-
-  // Global error handler
-  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error("[API] Unhandled error:", err);
-    res.status(500).json({ 
-      error: "Internal server error",
-      message: process.env.NODE_ENV === "development" ? err.message : undefined
-    });
+  process.on("SIGINT", () => {
+    if (fastapiProcess) {
+      console.log("[FastAPI] Shutting down...");
+      fastapiProcess.kill();
+    }
   });
 
   return httpServer;
